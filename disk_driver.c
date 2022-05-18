@@ -76,7 +76,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num);
 //marco
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
    int fd=disk->fd;
-   int ret=lseek(fd,sysconf(_SC_PAGE_SIZE)+BLOCK_SIZE*block_num,SEEK_SET);
+   int ret=lseek(fd,sysconf(_SC_PAGE_SIZE)+disk->header->num_blocks*sizeof(int)+BLOCK_SIZE*block_num,SEEK_SET);
    printf("ret seek = %d\n",ret);
    if(ret<0){
       perror("seek");
