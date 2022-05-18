@@ -6,10 +6,12 @@ AR=ar
 
 BINS= fat32_test
 
-OBJS = #add here your object files
+OBJS=disk_driver.o\
+	 fat32.o
+#add here your object files
 
 HEADERS=disk_driver.h\
-	fat32.h
+	    fat32.h
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(CCOPTS) -c -o $@  $<

@@ -1,4 +1,16 @@
 #include "disk_driver.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>  
+#include <string.h>  
+#include <errno.h>  
+#include <signal.h>  
+#include <fcntl.h>  
+#include <ctype.h>  
+#include <termios.h>  
+#include <sys/types.h>  
+#include <sys/mman.h> 
 
 /**
    The blocks indices seen by the read/write functions 
@@ -7,11 +19,26 @@
 
 // opens the file (creating it if necessary_
 // allocates the necessary space on the disk
-// calculates how big the bitmap should be
 // if the file was new
-// compiles a disk header, and fills in the bitmap of appropriate size
-// with all 0 (to denote the free space);
-void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks);
+// compiles a disk header
+void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
+   if ((disk->fd = open (filename, O_CREAT |O_RDWR | O_SYNC,0666)) == -1) { 
+    perror("error in the opening of file");
+  } 
+  int ret=ftruncate(disk->fd,sizeof(DiskHeader)+num_blocks*sizeof(int));
+  disk->header = mmap (0, sizeof(DiskHeader), PROT_READ | PROT_WRITE, MAP_SHARED, disk->fd, 0); 
+  if(disk->header==MAP_FAILED){
+     perror("header MAP FAILED \n");
+  }
+  disk->fat =mmap(0,num_blocks*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,0);
+
+  //printf("%d\n",disk->fd);
+  
+  if(disk->fat==MAP_FAILED){
+     perror("FAT MAP FAILED \n");
+  }
+
+}
 
 // reads the block in position block_num
 // returns -1 if the block is free accrding to the bitmap

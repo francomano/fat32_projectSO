@@ -1,7 +1,8 @@
 #include "fat32.h"
 
 
-
+// initializes a file system on an already made disk
+// returns a handle to the top level directory stored in the first block
 DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk);
 
 // creates the inital structures, the top level directory
