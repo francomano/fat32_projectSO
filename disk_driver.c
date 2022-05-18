@@ -28,7 +28,9 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
     perror("error in the opening of file");
   } 
   int ret=ftruncate(disk->fd,sizeof(DiskHeader)+num_blocks*sizeof(fatElem)+num_blocks*BLOCK_SIZE);
-
+   if(ret==-1){
+      perror("ftruncate");
+   }
 
   disk->header = mmap (0, sizeof(DiskHeader), PROT_READ | PROT_WRITE, MAP_SHARED, disk->fd, 0); 
   if(disk->header==MAP_FAILED){
@@ -75,12 +77,15 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
    int ret=lseek(fd,sizeof(DiskHeader)+disk->header->num_blocks*sizeof(fatElem)+BLOCK_SIZE*block_num,SEEK_SET);
    if(ret<0){
       perror("seek");
+      return -1;
    }
    ret=write(fd,src,BLOCK_SIZE);
    if(ret==-1){
       perror("write block error");
+      return -1;
    }
 
+   return ret;
 
    
 

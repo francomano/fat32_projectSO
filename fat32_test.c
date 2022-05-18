@@ -17,11 +17,9 @@ int main(int agc, char** argv) {
 
   DiskDriver* disk=(DiskDriver*)malloc(sizeof(DiskDriver));
 
-  DiskDriver_init(disk, "./file.txt", 100000);
+  DiskDriver_init(disk, "./file.txt", 100);
 
-  disk->fat[0].next=1;
 
-  printf("%d\n",disk->fat[0].next);
 
   getchar();
 
