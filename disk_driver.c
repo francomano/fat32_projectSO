@@ -27,7 +27,7 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
    if ((disk->fd = open (filename, O_CREAT |O_RDWR | O_SYNC,0666)) == -1) { 
     perror("error in the opening of file");
   } 
-  int ret=ftruncate(disk->fd,sizeof(DiskHeader)+num_blocks*sizeof(int)+num_blocks*BLOCK_SIZE);
+  int ret=ftruncate(disk->fd,sysconf(_SC_PAGE_SIZE)+num_blocks*BLOCK_SIZE);
    if(ret==-1){
       perror("ftruncate");
    }
@@ -76,7 +76,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num);
 //marco
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
    int fd=disk->fd;
-   int ret=lseek(fd,sizeof(DiskHeader)+disk->header->num_blocks*sizeof(int)+BLOCK_SIZE*block_num,SEEK_SET);
+   int ret=lseek(fd,sysconf(_SC_PAGE_SIZE)+BLOCK_SIZE*block_num,SEEK_SET);
    printf("ret seek = %d\n",ret);
    if(ret<0){
       perror("seek");
