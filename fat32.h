@@ -41,7 +41,7 @@ typedef struct {
 
 // this is remainder block of a directory
 typedef struct {
-  int file_blocks[ (BLOCK_SIZE)/sizeof(int) ];
+  int file_blocks[ (BLOCK_SIZE)/sizeof(int) ]; //array di indici dei primi blocchi di ogni file che la cartella contiene
 } DirectoryBlock;
 /******************* stuff on disk END *******************/
 

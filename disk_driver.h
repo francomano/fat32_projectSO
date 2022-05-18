@@ -20,7 +20,6 @@ typedef struct fat {
 typedef struct {
   DiskHeader* header; // mmapped
   fatElem* fat; //mmapped
-  int fatDim;
   int fd; // for us
 } DiskDriver;
 

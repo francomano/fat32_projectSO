@@ -34,12 +34,31 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
   if(disk->header==MAP_FAILED){
      perror("header MAP FAILED \n");
   }
+  disk->header->num_blocks=num_blocks;
+  disk->header->free_blocks=num_blocks;
+  disk->header->first_free_block=0;
+
+   if(msync(disk->header,sizeof(DiskHeader),MS_SYNC)==-1){
+      perror("MSYNC");
+   }
+
   disk->fat =mmap(disk->header+sizeof(DiskHeader),num_blocks*sizeof(fatElem),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,0);
   
   if(disk->fat==MAP_FAILED){
      perror("FAT MAP FAILED \n");
   }
-   disk->fatDim=num_blocks;
+
+   for(int i=0;i<num_blocks;i++){
+      disk->fat[i].end=0;
+      disk->fat[i].valid=0;
+      disk->fat[i].next=-1;
+
+   }
+
+  if(msync(disk->fat,sizeof(fatElem)*num_blocks,MS_SYNC)==-1){
+      perror("MSYNC FAT");
+   }
+   
 }
 
 // reads the block in position block_num
@@ -53,11 +72,14 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num);
 //marco
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
    int fd=disk->fd;
-   int ret=lseek(fd,sizeof(DiskHeader)+disk->fatDim*sizeof(fatElem)+BLOCK_SIZE*block_num,SEEK_SET);
+   int ret=lseek(fd,sizeof(DiskHeader)+disk->header->num_blocks*sizeof(fatElem)+BLOCK_SIZE*block_num,SEEK_SET);
    if(ret<0){
       perror("seek");
    }
    ret=write(fd,src,BLOCK_SIZE);
+   if(ret==-1){
+      perror("write block error");
+   }
 
 
    
