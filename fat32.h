@@ -1,5 +1,6 @@
 #pragma once
 #include "disk_driver.h"
+#include <stdlib.h>
 
 /*these are structures stored on disk*/
 
