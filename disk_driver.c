@@ -32,7 +32,7 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
       perror("ftruncate");
    }
 
-  disk->header = mmap (0, sizeof(DiskHeader), PROT_READ | PROT_WRITE, MAP_SHARED, disk->fd, 0); 
+  disk->header = mmap (1, sizeof(DiskHeader), PROT_READ | PROT_WRITE, MAP_SHARED, disk->fd, 0); 
   if(disk->header==MAP_FAILED){
      perror("header MAP FAILED \n");
   }
@@ -49,8 +49,11 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
   //printf("%d %d\n",disk->fat,MAP_FAILED);
 
 
+  disk->fat =mmap(1,num_blocks*sizeof(fatElem),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,sizeof(DiskHeader));
+  
   if(disk->fat==MAP_FAILED){
      perror("FAT MAP FAILED \n");
+     fflush(2);
   }
 
    for(int i=0;i<num_blocks;i++){

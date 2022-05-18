@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <stdlib.h>
-
+#include <unistd.h>
 int main(int agc, char** argv) {
  printf("FirstBlock size %ld\n", sizeof(FirstFileBlock));
   printf("DataBlock size %ld\n", sizeof(FileBlock));
