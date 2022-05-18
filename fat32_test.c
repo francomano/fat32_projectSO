@@ -20,7 +20,16 @@ int main(int agc, char** argv) {
   printf("%d\n",disk->fat[0]);
   printf("%d\n",disk->header->free_blocks);
 
-  printf("%d\n",sysconf(_SC_PAGE_SIZE));
+  //printf("%d\n",sysconf(_SC_PAGE_SIZE));
+
+  FileControlBlock FCB={
+    .name="NAME\0"
+  };
+  FirstFileBlock* ff=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+  ff->fcb=FCB;
+
+  int ret=DiskDriver_writeBlock(disk, ff, 10);
+  printf("%d\n",ret);
 
 
   getchar();
