@@ -27,7 +27,7 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
    if ((disk->fd = open (filename, O_CREAT |O_RDWR | O_SYNC,0666)) == -1) { 
     perror("error in the opening of file");
   } 
-  int ret=ftruncate(disk->fd,sizeof(DiskHeader)+num_blocks*sizeof(fatElem)+num_blocks*BLOCK_SIZE);
+  int ret=ftruncate(disk->fd,sizeof(DiskHeader)+num_blocks*sizeof(int)+num_blocks*BLOCK_SIZE);
    if(ret==-1){
       perror("ftruncate");
    }
@@ -44,20 +44,21 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
       perror("MSYNC");
    }
 
-  disk->fat =mmap(disk->header+sizeof(DiskHeader),num_blocks*sizeof(fatElem),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,0);
-  
+  disk->fat =mmap(disk->header+sizeof(DiskHeader),num_blocks*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,0);
+  //printf("%d %d\n",disk->fat,MAP_FAILED);
+
+
   if(disk->fat==MAP_FAILED){
      perror("FAT MAP FAILED \n");
   }
 
    for(int i=0;i<num_blocks;i++){
-      disk->fat[i].end=0;
-      disk->fat[i].valid=0;
-      disk->fat[i].next=-1;
+      disk->fat[i]=-1;
 
    }
+   
 
-  if(msync(disk->fat,sizeof(fatElem)*num_blocks,MS_SYNC)==-1){
+  if(msync(disk->fat,sizeof(int)*num_blocks,MS_SYNC)==-1){
       perror("MSYNC FAT");
    }
    
@@ -74,7 +75,8 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num);
 //marco
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
    int fd=disk->fd;
-   int ret=lseek(fd,sizeof(DiskHeader)+disk->header->num_blocks*sizeof(fatElem)+BLOCK_SIZE*block_num,SEEK_SET);
+   int ret=lseek(fd,sizeof(DiskHeader)+disk->header->num_blocks*sizeof(int)+BLOCK_SIZE*block_num,SEEK_SET);
+   printf("ret seek = %d\n",ret);
    if(ret<0){
       perror("seek");
       return -1;

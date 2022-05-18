@@ -10,16 +10,10 @@ typedef struct {
 
 } DiskHeader; 
 
-typedef struct fat {
-  unsigned int valid:1;
-  unsigned int end:1;
-  unsigned int next:30;
-} fatElem;
-
 
 typedef struct {
   DiskHeader* header; // mmapped
-  fatElem* fat; //mmapped
+  int* fat; //mmapped
   int fd; // for us
 } DiskDriver;
 

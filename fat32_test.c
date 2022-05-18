@@ -12,12 +12,12 @@ int main(int agc, char** argv) {
   printf("FirstDirectoryBlock size %ld\n", sizeof(FirstDirectoryBlock));
   printf("DirectoryBlock size %ld\n", sizeof(DirectoryBlock));
 
-  fatElem f [2];
-  printf("fatElem size %ld\n",sizeof(f));
 
   DiskDriver* disk=(DiskDriver*)malloc(sizeof(DiskDriver));
 
-  DiskDriver_init(disk, "./file.txt", 100);
+  DiskDriver_init(disk, "./file.txt", 1000);
+
+  printf("%d\n",disk->fat[0]);
 
 
 
