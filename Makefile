@@ -21,7 +21,7 @@ HEADERS=disk_driver.h\
 
 all:	$(BINS) 
 
-so_game: fat32_test.c $(OBJS) 
+fat32_test: fat32_test.c $(OBJS) 
 	$(CC) $(CCOPTS)  -o $@ $^ $(LIBS)
 
 clean:
