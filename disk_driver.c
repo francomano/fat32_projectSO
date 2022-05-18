@@ -39,12 +39,13 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
   disk->header->num_blocks=num_blocks;
   disk->header->free_blocks=num_blocks;
   disk->header->first_free_block=0;
+  printf("%d\n",disk->header->free_blocks);
 
-   if(msync(disk->header,sizeof(DiskHeader),MS_SYNC)==-1){
+   /*if(msync(disk->header,sizeof(DiskHeader),MS_SYNC)==-1){
       perror("MSYNC");
-   }
+   }*/
 
-  disk->fat =mmap(disk->header+sizeof(DiskHeader),num_blocks*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,0);
+  disk->fat =mmap(0,num_blocks*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,sysconf(_SC_PAGE_SIZE));
   //printf("%d %d\n",disk->fat,MAP_FAILED);
 
 
@@ -58,9 +59,9 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
    }
    
 
-  if(msync(disk->fat,sizeof(int)*num_blocks,MS_SYNC)==-1){
+  /*if(msync(disk->fat,sizeof(int)*num_blocks,MS_SYNC)==-1){
       perror("MSYNC FAT");
-   }
+   }*/
    
 }
 
