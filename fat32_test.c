@@ -28,7 +28,7 @@ int main(int agc, char** argv) {
   FirstFileBlock* ff=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
   ff->fcb=FCB;
 
-  int ret=DiskDriver_writeBlock(disk, ff, 10);
+  int ret=DiskDriver_writeBlock(disk, ff, 1);
   printf("%d\n",ret);
 
 
