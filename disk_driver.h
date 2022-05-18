@@ -1,5 +1,6 @@
 #pragma once
 
+
 #define BLOCK_SIZE 512
 // this is stored in the 1st block of the disk
 typedef struct {
@@ -18,7 +19,8 @@ typedef struct fat {
 
 typedef struct {
   DiskHeader* header; // mmapped
-  int* fat; //mmapped
+  fatElem* fat; //mmapped
+  int fatDim;
   int fd; // for us
 } DiskDriver;
 

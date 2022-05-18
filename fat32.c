@@ -3,7 +3,9 @@
 
 // initializes a file system on an already made disk
 // returns a handle to the top level directory stored in the first block
-DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk);
+DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk){
+    fs->disk=disk;
+}
 
 // creates the inital structures, the top level directory
 // has name "/" and its control block is in the first position

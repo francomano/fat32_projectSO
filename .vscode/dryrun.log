@@ -1,5 +1,6 @@
-make --dry-run --always-make --keep-going --print-directory
+make --dry-run --keep-going --print-directory
 make: Entering directory `/Users/Marco/Desktop/fat32_projectSO'
-gcc     fat32_test.c   -o fat32_test
+make: Nothing to be done for `all'.
+ 
 make: Leaving directory `/Users/Marco/Desktop/fat32_projectSO'
  

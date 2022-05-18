@@ -19,12 +19,9 @@ int main(int agc, char** argv) {
 
   DiskDriver_init(disk, "./file.txt", 100000);
 
-  disk->fat[0]=1;
+  disk->fat[0].next=1;
 
-  printf("%d\n",disk->fat[0]);
-
-  printf("ok\n");
- 
+  printf("%d\n",disk->fat[0].next);
 
   getchar();
 
