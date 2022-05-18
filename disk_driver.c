@@ -27,7 +27,7 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
    if ((disk->fd = open (filename, O_CREAT |O_RDWR | O_SYNC,0666)) == -1) { 
     perror("error in the opening of file");
   } 
-  int ret=ftruncate(disk->fd,sysconf(_SC_PAGE_SIZE)+num_blocks*BLOCK_SIZE);
+  int ret=ftruncate(disk->fd,sysconf(_SC_PAGE_SIZE)+num_blocks*sizeof(int)+num_blocks*BLOCK_SIZE);
    if(ret==-1){
       perror("ftruncate");
    }
