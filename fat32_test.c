@@ -1,7 +1,7 @@
 #include "fat32.h"
 #include <stdio.h>
 
-
+#include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <stdlib.h>
@@ -12,23 +12,26 @@ int main(int agc, char** argv) {
   printf("FirstDirectoryBlock size %ld\n", sizeof(FirstDirectoryBlock));
   printf("DirectoryBlock size %ld\n", sizeof(DirectoryBlock));
 
-  fatElem f [2];
-  printf("fatElem size %ld\n",sizeof(f));
 
   DiskDriver* disk=(DiskDriver*)malloc(sizeof(DiskDriver));
-  
-  DiskDriver_init(disk, "./file.txt", 10000);
-  FirstFileBlock* block = (FirstFileBlock*)malloc(sizeof(FirstFileBlock));
-  FileControlBlock fcb = {
-	  .name = "Pippo\0"
+
+  DiskDriver_init(disk, "./file.txt", 100);
+
+  printf("%d\n",disk->fat[0]);
+  printf("%d\n",disk->header->free_blocks);
+
+  //printf("%d\n",sysconf(_SC_PAGE_SIZE));
+
+  FileControlBlock FCB={
+    .name="NAME\0"
   };
-  block->fcb = fcb;
-  int num_bytes = DiskDriver_writeBlock(disk,block,0);
-  char buff[20];
-  printf("AOOOOOOOOO");
-  int ret=lseek(disk->fd,sizeof(DiskHeader)+100*sizeof(fatElem),SEEK_SET);
-  ret = read(disk->fd,buff,5);
-  printf(buff);
+  FirstFileBlock* ff=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+  ff->fcb=FCB;
+
+  int ret=DiskDriver_writeBlock(disk, ff, 10);
+  printf("%d\n",ret);
+
+
   getchar();
 
   
