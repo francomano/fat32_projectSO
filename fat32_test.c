@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <stdlib.h>
-
+#include <unistd.h>
 int main(int agc, char** argv) {
  printf("FirstBlock size %ld\n", sizeof(FirstFileBlock));
   printf("DataBlock size %ld\n", sizeof(FileBlock));
@@ -16,11 +16,19 @@ int main(int agc, char** argv) {
   printf("fatElem size %ld\n",sizeof(f));
 
   DiskDriver* disk=(DiskDriver*)malloc(sizeof(DiskDriver));
-
-  DiskDriver_init(disk, "./file.txt", 100);
-
-
-
+  
+  DiskDriver_init(disk, "./file.txt", 10000);
+  FirstFileBlock* block = (FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+  FileControlBlock fcb = {
+	  .name = "Pippo\0"
+  };
+  block->fcb = fcb;
+  int num_bytes = DiskDriver_writeBlock(disk,block,0);
+  char buff[20];
+  printf("AOOOOOOOOO");
+  int ret=lseek(disk->fd,sizeof(DiskHeader)+100*sizeof(fatElem),SEEK_SET);
+  ret = read(disk->fd,buff,5);
+  printf(buff);
   getchar();
 
   
