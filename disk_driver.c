@@ -68,7 +68,27 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 // reads the block in position block_num
 // returns -1 if the block is free accrding to the bitmap
 // 0 otherwise
-int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num);
+//edoardo
+int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
+      int n_blocks = disk->header->num_blocks;
+      if(block_num<0 || block_num>=n_blocks) {
+         fprintf(stderr,"Block %d out of range (0<=block<=%d)",block_num,n_blocks);
+         return -1;
+      }
+      int fd = disk->fd;
+      int ret = lseek(fd,sysconf(_SC_PAGE_SIZE)+ n_blocks*sizeof(int)+BLOCK_SIZE*block_num,SEEK_SET);
+      if(ret<0) {
+         fprintf(stderr,"Error seeking block %d",block_num);
+         return -1;
+      }
+      ret = read(fd,dest,BLOCK_SIZE);
+      if(ret==-1) {
+         fprintf(stderr,"Error reading block %d",block_num);
+         return -1;
+      }
+      return ret;
+}
+
 
 // writes a block in position block_num, and alters the bitmap accordingly
 // returns -1 if operation not possible
@@ -96,10 +116,48 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
 
 // frees a block in position block_num, and alters the bitmap accordingly
 // returns -1 if operation not possible
-int DiskDriver_freeBlock(DiskDriver* disk, int block_num);
+//edoardo
+int DiskDriver_freeBlock(DiskDriver* disk, int block_num) {
+   int n_blocks = disk->header->num_blocks;
+   if(block_num<0 || block_num>=n_blocks) {
+      fprintf(stderr,"Block %d out of range (0<=block<=%d)",block_num,n_blocks);
+      return -1;
+   }
+   int fd = disk->fd;
+   int ret = lseek(fd,sysconf(_SC_PAGE_SIZE)+ n_blocks*sizeof(int)+BLOCK_SIZE*block_num,SEEK_SET);
+   if(ret<0) {
+      fprintf(stderr,"Error seeking block %d",block_num);
+      return -1;
+   }
+   int zero_block[BLOCK_SIZE] = {0};
+   ret = write(fd,zero_block,BLOCK_SIZE);
+   if(ret<0) {
+      fprintf(stderr,"Error freeing block %d",block_num);
+      return -1;
+   }
+   disk->fat[block_num] = -1;
+   disk->header->num_blocks--;
+   if(block_num<disk->header->first_free_block)  disk->header->first_free_block = block_num;
+   return block_num;
+}
 
 // returns the first free blockin the disk from position (checking the bitmap)
-int DiskDriver_getFreeBlock(DiskDriver* disk, int start);
+int DiskDriver_getFreeBlock(DiskDriver* disk, int start){
+   int n_blocks = disk->header->num_blocks;
+   if(start<0 || start>n_blocks) {
+      fprintf(stderr,"Start index %d out of range (0<=block<=%d)",start,n_blocks);
+      return -1;
+   }
+   if(disk->header->first_free_block>start) return disk->header->first_free_block;
+   for(int i=start;i<n_blocks;i++) {
+      if(disk->fat[i]==-1) {
+         disk->header->first_free_block = i;
+         return i;
+      }
+   }
+   fprintf(stderr,"Memory error out of disk space");
+   return -1;
+}
 
 // writes the data (flushing the mmaps)
 int DiskDriver_flush(DiskDriver* disk);
