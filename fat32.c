@@ -108,6 +108,9 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     strcpy(fdb->fcb.name,dirname);
     fdb->fcb.size=0;
     fdb->fcb.is_dir=1;
+     for(int i=0; i<first_size;i++){
+        fdb->file_blocks[i]=-1;
+    }
     int ret=DiskDriver_writeBlock(d->f->disk, fdb, block_index);
     printf("write %d bytes for the new dir\n",ret);
     d->f->disk->fat[block_index]=block_index; //se la fat ha stesso numero dell'indice è in uso il blocco(valid) ma senza successori
