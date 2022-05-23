@@ -88,18 +88,16 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     if(d==NULL || dirname==NULL){
         return -1;
     }
-
-
-    
     int block_index=DiskDriver_getFreeBlock(d->f->disk,d->f->cwd->fcb.block_in_disk);
+
+    printf("scriverò il blocco di questa nuova cartella in pos %d\n",block_index);
     if(block_index==-1){
         return -1;
     }
-
-    
     int first_size=(BLOCK_SIZE
 		   -sizeof(FileControlBlock)
 		    -sizeof(int))/sizeof(int);
+    printf("il primo blocco contiene %d entries\n",first_size);
    
     
     //QUESTA PORZIONE CREA LA NUOVA CARTELLA
@@ -117,7 +115,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     if(d->dcb->num_entries<first_size){
         d->dcb->num_entries++;
         for(int i=0;i<first_size;i++){
-            if(d->dcb->file_blocks[i]!=-1){
+            if(d->dcb->file_blocks[i]==-1){
                 d->dcb->file_blocks[i]=block_index;
             }
         }

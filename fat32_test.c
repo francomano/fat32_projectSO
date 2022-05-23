@@ -38,6 +38,9 @@ int main(int agc, char** argv) {
     printf("errore mkdir\n");
   }
   
+  FirstDirectoryBlock* fdb=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
+  DiskDriver_readBlock(disk,fdb,root->dcb->file_blocks[0]);
+  printf("%s",fdb->fcb.name);
 
   getchar();
 
