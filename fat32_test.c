@@ -17,19 +17,22 @@ int main(int agc, char** argv) {
 
   DiskDriver_init(disk, "./file.txt", 100);
 
-  printf("%d\n",disk->fat[0]);
-  printf("%d\n",disk->header->free_blocks);
+  //printf("%d\n",disk->fat[0]);
+  //printf("%d\n",disk->header->free_blocks);
 
   //printf("%d\n",sysconf(_SC_PAGE_SIZE));
 
-  FileControlBlock FCB={
+ /* FileControlBlock FCB={
     .name="NAME\0"
   };
   FirstFileBlock* ff=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
   ff->fcb=FCB;
 
   int ret=DiskDriver_writeBlock(disk, ff, 0);
-  printf("%d\n",ret);
+  printf("%d\n",ret);*/
+  fat32* fs=(fat32*)malloc(sizeof(fat32));
+  DirectoryHandle* root=fat32_init(fs,disk);
+  printf("%d\n",root->pos_in_block);
 
 
   getchar();

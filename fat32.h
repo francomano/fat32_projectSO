@@ -52,6 +52,7 @@ typedef struct {
   
 typedef struct {
   DiskDriver* disk;
+  FirstDirectoryBlock* cwd;
   // add more fields if needed
 } fat32;
 
