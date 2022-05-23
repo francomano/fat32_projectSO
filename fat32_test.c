@@ -34,6 +34,10 @@ int main(int agc, char** argv) {
   DirectoryHandle* root=fat32_init(fs,disk);
   printf("%d\n",root->pos_in_block);
 
+  if(fat32_mkDir(root,"prova")){
+    printf("errore mkdir\n");
+  }
+  
 
   getchar();
 
