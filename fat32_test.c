@@ -40,7 +40,11 @@ int main(int agc, char** argv) {
   
   FirstDirectoryBlock* fdb=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
   DiskDriver_readBlock(disk,fdb,root->dcb->file_blocks[0]);
-  printf("%s",fdb->fcb.name);
+  printf("%s\n",fdb->fcb.name);
+
+  if(fat32_mkDir(root,"prova2")){
+    printf("errore mkdir\n");
+  }
 
   getchar();
 
