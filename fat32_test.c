@@ -45,6 +45,10 @@ int main(int agc, char** argv) {
   if(fat32_mkDir(root,"prova2")){
     printf("errore mkdir\n");
   }
+  if(fat32_changeDir(root,"prova")){
+    printf("errore nella changeDir\n");
+  }
+  printf("ora sono in %s\n",root->dcb->fcb.name);
 
   getchar();
 

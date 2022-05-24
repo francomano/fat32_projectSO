@@ -76,7 +76,50 @@ int fat32_seek(FileHandle* f, int pos);
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
 // it does side effect on the provided handle
- int fat32_changeDir(DirectoryHandle* d, char* dirname);
+//marco
+int fat32_changeDir(DirectoryHandle* d, char* dirname){
+    if(!strcmp(dirname,"..")){
+        FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
+        DiskDriver_readBlock(d->f->disk,aux,d->directory->fcb.directory_block);
+        d->dcb=d->directory;
+        d->directory=aux;
+    }
+    else{
+        int entries_of_first_block=(BLOCK_SIZE
+		   -sizeof(FileControlBlock)
+		    -sizeof(int))/sizeof(int);
+        int entries_of_others=BLOCK_SIZE/sizeof(int);
+        int numero_blocchi_successori=(d->dcb->num_entries-entries_of_first_block)/entries_of_others;
+        FirstDirectoryBlock* aux2=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
+        for(int i=0;i<entries_of_first_block;i++){
+            int pos=d->dcb->file_blocks[i];
+            if(DiskDriver_readBlock(d->f->disk,aux2,pos)==-1){
+                return -1;
+            }
+            printf("%s\n",aux2->fcb.name);
+            if(!strcmp(aux2->fcb.name,dirname)) {
+                d->directory=d->dcb;
+                d->dcb=aux2;
+                return 0;
+            }
+        }
+        for(int num=0;num<numero_blocchi_successori;num++){
+            for(int j=0;j<entries_of_others;j++){
+                int pos2=d->dcb->file_blocks[j];
+                if(DiskDriver_readBlock(d->f->disk,aux2,pos2)==-1){
+                return -1;
+                }
+                if(!strcmp(aux2->fcb.name,dirname)) {
+                     d->directory=d->dcb;
+                    d->dcb=aux2;
+                    return 0;
+                }
+            }
+        }
+
+    }
+    return -1;
+}
 
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
