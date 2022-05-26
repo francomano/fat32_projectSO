@@ -159,7 +159,6 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     d->f->disk->fat[block_index]=block_index; //se la fat ha stesso numero dell'indice è in uso il blocco(valid) ma senza successori
         
     if(d->dcb->num_entries<first_size){
-        d->dcb->num_entries++;
         for(int i=0;i<first_size;i++){
             if(d->dcb->file_blocks[i]==-1){
                 d->dcb->file_blocks[i]=block_index;
@@ -190,6 +189,8 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
             if(flag){
                 //DirectoryBlock* dirBlock=(DirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
                 int index=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
+                if(index==-1)
+                    return -1;
                 DiskDriver_writeBlock(d->f->disk, dirBlock, index);
                 d->f->disk->fat[first_succ_index]=index; //successore del successore
                 dirBlock->file_blocks[0]=block_index;
@@ -199,6 +200,8 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
         else{
             DirectoryBlock* dirBlock=(DirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
             int idx=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
+            if(idx==-1)
+                    return -1;
             DiskDriver_writeBlock(d->f->disk, dirBlock, idx);
             d->f->disk->fat[d->dcb->fcb.block_in_disk]=idx;
             dirBlock->file_blocks[0]=block_index;
@@ -207,6 +210,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
  
         }
 
+    d->dcb->num_entries++;
 
     return 0;
 
