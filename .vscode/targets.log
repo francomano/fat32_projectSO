@@ -6,8 +6,9 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # PARTICULAR PURPOSE.
 
 # This program built for i386-apple-darwin11.3.0
+ 
 
-# Make data base, printed on Fri May 27 01:20:04 2022
+# Make data base, printed on Fri May 27 09:05:30 2022
 
 # Variables
 
@@ -38,7 +39,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/v8/mhxj6bfs2l3cpn1s0yq2lcl80000gn/T/vscode-ipc-ec66c8f9-501f-4bbe-a757-474baabb997c.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/v8/mhxj6bfs2l3cpn1s0yq2lcl80000gn/T/vscode-ipc-fab0dbca-f5ac-4744-b9bc-8f843b0b4084.sock
 # environment
 VSCODE_CWD = /
 # environment
@@ -148,9 +149,9 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 76997
+VSCODE_PID = 78205
 # variable set hash-table stats:
-# Load=69/1024=7%, Rehash=0, Collisions=9/96=9%
+# Load=69/1024=7%, Rehash=0, Collisions=9/100=9%
 
 # Pattern-specific Variable Values
 
@@ -178,9 +179,9 @@ all: fat32_test
 #  Implicit rule search has been done.
 #  File does not exist.
 #  File has been updated.
-#  Successfully updated.
+#  Needs to be updated (-q is set).
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
 
 .phony: clean all
 #  Implicit rule search has not been done.
@@ -192,15 +193,6 @@ all: fat32_test
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-
-# Not a target:
-fat32.c:
-#  Implicit rule search has been done.
-#  Last modified 2022-05-24 19:29:10
-#  File has been updated.
-#  Successfully updated.
-# variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
 
 # Not a target:
 Makefile:
@@ -225,9 +217,25 @@ disk_driver.o: disk_driver.c disk_driver.h fat32.h
 #  Implicit/static pattern stem: `disk_driver'
 #  Last modified 2022-05-24 18:37:46
 #  File has been updated.
-#  Successfully updated.
+#  Needs to be updated (-q is set).
+# automatic
+# @ := disk_driver.o
+# automatic
+# % := 
+# automatic
+# * := disk_driver
+# automatic
+# + := disk_driver.c disk_driver.h fat32.h
+# automatic
+# | := 
+# automatic
+# < := disk_driver.c
+# automatic
+# ^ := disk_driver.c disk_driver.h fat32.h
+# automatic
+# ? := disk_driver.c
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+# Load=8/32=25%, Rehash=0, Collisions=1/14=7%
 #  commands to execute (from `Makefile', line 17):
 	$(CC) $(CCOPTS) -c -o $@  $<
 	
@@ -242,9 +250,9 @@ fat32_test: fat32_test.c disk_driver.o fat32.o
 #  Implicit rule search has not been done.
 #  Last modified 2022-05-24 19:29:13
 #  File has been updated.
-#  Successfully updated.
+#  Needs to be updated (-q is set).
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
 #  commands to execute (from `Makefile', line 25):
 	$(CC) $(CCOPTS)  -o $@ $^ $(LIBS)
 	
@@ -260,23 +268,17 @@ clean:
 # Not a target:
 disk_driver.c:
 #  Implicit rule search has been done.
-#  Last modified 2022-05-24 18:37:42
+#  Last modified 2022-05-27 01:25:40
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
 
-fat32.o: fat32.c disk_driver.h fat32.h
-#  Implicit rule search has been done.
-#  Implicit/static pattern stem: `fat32'
-#  Last modified 2022-05-24 19:29:13
-#  File has been updated.
-#  Successfully updated.
-# variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
-#  commands to execute (from `Makefile', line 17):
-	$(CC) $(CCOPTS) -c -o $@  $<
-	
+# Not a target:
+fat32.o:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
 
 # Not a target:
 disk_driver.h:
@@ -297,7 +299,7 @@ fat32_test.c:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
 
 # files hash-table stats:
-# Load=14/1024=1%, Rehash=0, Collisions=1/47=2%
+# Load=13/1024=1%, Rehash=0, Collisions=1/39=3%
 # VPATH Search Paths
 
 # No `vpath' search paths.
@@ -309,6 +311,6 @@ fat32_test.c:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Fri May 27 01:20:04 2022
+# Finished Make data base on Fri May 27 09:05:30 2022
 
  
