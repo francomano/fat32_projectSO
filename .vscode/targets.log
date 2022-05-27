@@ -8,7 +8,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This program built for i386-apple-darwin11.3.0
  
 
-# Make data base, printed on Fri May 27 09:05:30 2022
+# Make data base, printed on Fri May 27 10:17:06 2022
 
 # Variables
 
@@ -39,7 +39,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/v8/mhxj6bfs2l3cpn1s0yq2lcl80000gn/T/vscode-ipc-fab0dbca-f5ac-4744-b9bc-8f843b0b4084.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/v8/mhxj6bfs2l3cpn1s0yq2lcl80000gn/T/vscode-ipc-1897a7bd-52a4-439b-ae79-e5545dba1136.sock
 # environment
 VSCODE_CWD = /
 # environment
@@ -119,6 +119,7 @@ MAKEFLAGS = Rrqp
 # environment
 MFLAGS = -Rrqp
 # automatic
+ 
 *D = $(patsubst %/,%,$(dir $*))
 # environment
 XPC_SERVICE_NAME = application.com.microsoft.VSCode.12916037732.12916037738
@@ -149,7 +150,7 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 78205
+VSCODE_PID = 79221
 # variable set hash-table stats:
 # Load=69/1024=7%, Rehash=0, Collisions=9/100=9%
 
@@ -197,6 +198,7 @@ all: fat32_test
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
+ 
 #  Last modified 2022-05-18 15:23:18
 #  File has been updated.
 #  Successfully updated.
@@ -311,6 +313,6 @@ fat32_test.c:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Fri May 27 09:05:30 2022
+# Finished Make data base on Fri May 27 10:17:06 2022
 
  
