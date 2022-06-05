@@ -73,7 +73,7 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
     int max_dir_entries=(BLOCK_SIZE
 		   -sizeof(FileControlBlock)
 		    -sizeof(int))/sizeof(int);
-    printf("%d %d\n",d->dcb->num_entries,max_dir_entries);
+    printf("la cartella %s ha %d entries %d\n",d->dcb->fcb.name,d->dcb->num_entries,max_dir_entries);
     if(d->dcb->num_entries<max_dir_entries){
         for(int i=0;i<max_dir_entries;i++){
             if(d->dcb->file_blocks[i]==-1){
@@ -182,13 +182,15 @@ int fat32_write(FileHandle* f, void* data, int size){
                 printf("iterazione %d\n",i);
                  DiskDriver_writeBlock(f->f->disk,block,index);
                  int old_index=index;
-                 index=DiskDriver_getFreeBlock(f->f->disk,index);
                  f->f->disk->fat[old_index]=index;
+                 index=DiskDriver_getFreeBlock(f->f->disk,old_index);
+                 f->f->disk->fat[old_index]=index;
+
              }
         }
     }
     else{
-        
+        //INCOMPLETA
 
     }
     f->pos_in_file+=bytes_written;
@@ -223,10 +225,20 @@ int fat32_seek(FileHandle* f, int pos);
 int fat32_changeDir(DirectoryHandle* d, char* dirname){
     if(!strcmp(dirname,"..")){
         FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
-        DiskDriver_readBlock(d->f->disk,aux,d->directory->fcb.directory_block);
-        d->dcb=d->directory;
-        d->directory=aux;
-        printf("%d entries nell'ultima change\n",d->directory->num_entries);
+        if(d->directory->fcb.block_in_disk==0){
+             DiskDriver_readBlock(d->f->disk,aux,0);
+             d->dcb=aux;
+             d->directory=NULL;
+        }
+        else{
+            DiskDriver_readBlock(d->f->disk,aux,d->directory->fcb.directory_block);
+            d->dcb=d->directory;
+            d->directory=aux;
+        }
+        
+        
+        
+    
         d->f->cwd=d->dcb;
         return 0;
     }
@@ -247,7 +259,6 @@ int fat32_changeDir(DirectoryHandle* d, char* dirname){
                 d->directory=d->dcb;
                 d->dcb=aux2;
                 d->f->cwd=d->dcb;
-                printf("%d entries\n",d->dcb->num_entries);
                 return 0;
             }
         }
@@ -282,7 +293,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     }
     int block_index=DiskDriver_getFreeBlock(d->f->disk,d->f->cwd->fcb.block_in_disk);
 
-    printf("scriverò il blocco di questa nuova cartella in pos %d\n",block_index);
+    //  printf("scriverò il blocco di questa nuova cartella in pos %d\n",block_index);
     if(block_index==-1){
         return -1;
     }
@@ -290,7 +301,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     int first_size=(BLOCK_SIZE
 		   -sizeof(FileControlBlock)
 		    -sizeof(int))/sizeof(int);
-    printf("il primo blocco contiene %d entries\n",first_size);
+    
    
     
     //QUESTA PORZIONE CREA LA NUOVA CARTELLA
@@ -304,8 +315,8 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
      for(int i=0; i<first_size;i++){
         fdb->file_blocks[i]=-1;
     }
-    int ret=DiskDriver_writeBlock(d->f->disk, fdb, block_index);
-    printf("write %d bytes for the new dir\n",ret);
+    DiskDriver_writeBlock(d->f->disk, fdb, block_index);
+    //printf("write %d bytes for the new dir\n",ret);
     d->f->disk->fat[block_index]=block_index; //se la fat ha stesso numero dell'indice è in uso il blocco(valid) ma senza successori
         
     if(d->dcb->num_entries<first_size){
@@ -316,7 +327,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
             }
         }
     }
-    else{   //SE HO PIU ENTRIES DI QUANTE NE PUò CONTENER EIL PRIMO BLOCCO, HO SUCCESSORI OPPURE DEVO CREARLO
+    else{   //SE HO PIU ENTRIES DI QUANTE NE PUò CONTENERE IL PRIMO BLOCCO, HO SUCCESSORI OPPURE DEVO CREARLO
         int* fat=d->f->disk->fat;
         int first_succ_index=fat[d->dcb->fcb.block_in_disk];
         //int numero_blocchi_successori=(d->dcb->num_entries-first_size)/(BLOCK_SIZE/(sizeof(int)));

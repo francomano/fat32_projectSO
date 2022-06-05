@@ -45,7 +45,7 @@ printf("root num entries %d\n",root->dcb->num_entries);
   if(fat32_changeDir(root,"prova")){
     printf("errore nella changeDir\n");
   }
-  printf("ora sono in %s\n",root->dcb->fcb.name);
+ printf("ora sono in %s e ho %d entries e il mio parent ne ha %d\n",root->dcb->fcb.name,root->dcb->num_entries,root->directory->num_entries);
   
 
    if(fat32_mkDir(root,"prova3")){
@@ -54,7 +54,8 @@ printf("root num entries %d\n",root->dcb->num_entries);
   if(fat32_changeDir(root,"prova3")){
     printf("errore nella changeDir\n");
   }
-  printf("ora sono in %s\n",root->dcb->fcb.name);
+  printf("ora sono in %s e ho %d entries e il mio parent ne ha %d\n",root->dcb->fcb.name,root->dcb->num_entries,root->directory->num_entries);
+  
  
 
    
@@ -66,9 +67,6 @@ printf("root num entries %d\n",root->dcb->num_entries);
   }
   printf("%s",root->dcb->fcb.name);
   printf("root num entries dopo aver fatto avanti e indietro nelle cartelle %d\n",root->dcb->num_entries);
-  FirstDirectoryBlock* try=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
-  DiskDriver_readBlock(disk,try,0);
-  printf("%d\n",try->num_entries);
   FileHandle* fh=fat32_createFile(root,"file_test.txt");
   FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
   if(!fh) printf("Error  creating file");
@@ -76,14 +74,14 @@ printf("root num entries %d\n",root->dcb->num_entries);
   printf("%s\n",ffb->fcb.name);
   
   
-  /*char*buff=malloc(10000);
+  char*buff=malloc(10000);
   memset(buff,0,10000);
   int ret=fat32_write(fh,buff,10000);
   printf("%d\n",ret);
   char buf[10000];
   //ret=fat32_read(fh,buf,10000);
   printf("%s",buf);
-  */
+  
  
   
 }
