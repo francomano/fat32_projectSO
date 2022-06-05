@@ -69,6 +69,12 @@ int main(int agc, char** argv) {
   if(!fh) printf("Error  creating file");
   DiskDriver_readBlock(disk,ffb,fh->ffb->fcb.block_in_disk);
   printf("%s\n",ffb->fcb.name);
+
+  int ret=fat32_write(fh,"ciao",4);
+  printf("%d\n",ret);
+  char buf[5];
+  ret=fat32_read(fh,buf,4);
+  printf("%s",buf);
   getchar();
  
   

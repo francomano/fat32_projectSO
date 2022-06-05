@@ -171,9 +171,9 @@ int fat32_read(FileHandle* f, void* data, int size) {
             bytes_read+=size;
         }
     }
-    else {
+    /*else {
 
-    }
+    }*/
     return bytes_read;
 }
 // returns the number of bytes read (moving the current pointer to pos)
