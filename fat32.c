@@ -161,11 +161,21 @@ int fat32_write(FileHandle* f, void* data, int size){
     return bytes_read;
 }
 
-// writes in the file, at current position size bytes stored in data
-// overwriting and allocating new space if necessary
+// reads in the file, at current position size bytes stored in data
 // returns the number of bytes read
-int fat32_read(FileHandle* f, void* data, int size);
+int fat32_read(FileHandle* f, void* data, int size) {
+    int bytes_read=0;
+    if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)) {
+        if(f->pos_in_file+size<BLOCK_SIZE-sizeof(FileControlBlock)) {
+            memcpy(data,f->ffb->data+f->pos_in_file,size);
+            bytes_read+=size;
+        }
+    }
+    else {
 
+    }
+    return bytes_read;
+}
 // returns the number of bytes read (moving the current pointer to pos)
 // returns pos on success
 // -1 on error (file too short)
