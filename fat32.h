@@ -59,7 +59,7 @@ typedef struct {
 // this is a file handle, used to refer to open files
 typedef struct {
   fat32* f;                   // pointer to memory file system structure
-  FirstFileBlock* fcb;             // pointer to the first block of the file(read it)
+  FirstFileBlock* ffb;             // pointer to the first block of the file(read it)
   FirstDirectoryBlock* directory;  // pointer to the directory where the file is stored
   int pos_in_file;                 // position of the cursor
 } FileHandle;

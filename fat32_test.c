@@ -1,6 +1,6 @@
 #include "fat32.h"
 #include <stdio.h>
-
+#include <assert.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -37,7 +37,7 @@ int main(int agc, char** argv) {
   if(fat32_mkDir(root,"prova")){
     printf("errore mkdir\n");
   }
-  
+  printf("%s\n",root->dcb->fcb.name);
   FirstDirectoryBlock* fdb=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
   DiskDriver_readBlock(disk,fdb,root->dcb->file_blocks[0]);
   printf("%s\n",fdb->fcb.name);
@@ -57,8 +57,19 @@ int main(int agc, char** argv) {
     printf("errore nella changeDir\n");
   }
    printf("ora sono in %s\n",root->dcb->fcb.name);
-
+  if(fat32_changeDir(root,"..")){
+    printf("errore nella changeDir\n");
+  }
+  if(fat32_changeDir(root,"..")){
+    printf("errore nella changeDir\n");
+  }
+  printf("%s",root->dcb->fcb.name);
+  FileHandle* fh=fat32_createFile(root,"file_test.txt");
+  FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+  if(!fh) printf("Error  creating file");
+  DiskDriver_readBlock(disk,ffb,fh->ffb->fcb.block_in_disk);
+  printf("%s\n",ffb->fcb.name);
   getchar();
-
+ 
   
 }
