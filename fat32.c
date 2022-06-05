@@ -124,6 +124,7 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
         }
 
     d->dcb->num_entries++;
+    //AGGIORNARE LA SIZE DELLA CARTELLA E DEI GENITORI
     return fh;
         
 }
@@ -144,7 +145,21 @@ int fat32_close(FileHandle* f);
 // writes in the file, at current position for size bytes stored in data
 // overwriting and allocating new space if necessary
 // returns the number of bytes written
-int fat32_write(FileHandle* f, void* data, int size);
+//marco
+int fat32_write(FileHandle* f, void* data, int size){
+    int bytes_read=0;
+    int data_first_space=BLOCK_SIZE-sizeof(FileControlBlock);
+    if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)){
+        if(size<=data_first_space-f->pos_in_file){ //se c'è ancora spazio nel primo blocco dalla posizione in cui sono
+            FirstFileBlock* first=f->ffb;
+            memcpy(first->data+f->pos_in_file,data,size);
+            DiskDriver_writeBlock(f->f->disk,first,f->ffb->fcb.block_in_disk);
+            bytes_read+=size;
+
+        }
+    }
+    return bytes_read;
+}
 
 // writes in the file, at current position size bytes stored in data
 // overwriting and allocating new space if necessary
