@@ -32,23 +32,21 @@ int main(int agc, char** argv) {
   printf("%d\n",ret);*/
   fat32* fs=(fat32*)malloc(sizeof(fat32));
   DirectoryHandle* root=fat32_init(fs,disk);
-  printf("%d\n",root->pos_in_block);
-
+printf("root num entries %d\n",root->dcb->num_entries);
   if(fat32_mkDir(root,"prova")){
     printf("errore mkdir\n");
   }
-  printf("%s\n",root->dcb->fcb.name);
-  FirstDirectoryBlock* fdb=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
-  DiskDriver_readBlock(disk,fdb,root->dcb->file_blocks[0]);
-  printf("%s\n",fdb->fcb.name);
+  printf("root num entries dopo aver creato prova %d\n",root->dcb->num_entries);
 
   if(fat32_mkDir(root,"prova2")){
     printf("errore mkdir\n");
   }
+  printf("root num entries dopo aver creato prova2 %d\n",root->dcb->num_entries);
   if(fat32_changeDir(root,"prova")){
     printf("errore nella changeDir\n");
   }
   printf("ora sono in %s\n",root->dcb->fcb.name);
+  
 
    if(fat32_mkDir(root,"prova3")){
     printf("errore mkdir\n");
@@ -56,7 +54,10 @@ int main(int agc, char** argv) {
   if(fat32_changeDir(root,"prova3")){
     printf("errore nella changeDir\n");
   }
-   printf("ora sono in %s\n",root->dcb->fcb.name);
+  printf("ora sono in %s\n",root->dcb->fcb.name);
+ 
+
+   
   if(fat32_changeDir(root,"..")){
     printf("errore nella changeDir\n");
   }
@@ -64,18 +65,25 @@ int main(int agc, char** argv) {
     printf("errore nella changeDir\n");
   }
   printf("%s",root->dcb->fcb.name);
+  printf("root num entries dopo aver fatto avanti e indietro nelle cartelle %d\n",root->dcb->num_entries);
+  FirstDirectoryBlock* try=(FirstDirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
+  DiskDriver_readBlock(disk,try,0);
+  printf("%d\n",try->num_entries);
   FileHandle* fh=fat32_createFile(root,"file_test.txt");
   FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
   if(!fh) printf("Error  creating file");
   DiskDriver_readBlock(disk,ffb,fh->ffb->fcb.block_in_disk);
   printf("%s\n",ffb->fcb.name);
-
-  int ret=fat32_write(fh,"ciao",4);
+  
+  
+  /*char*buff=malloc(10000);
+  memset(buff,0,10000);
+  int ret=fat32_write(fh,buff,10000);
   printf("%d\n",ret);
-  char buf[5];
-  ret=fat32_read(fh,buf,4);
+  char buf[10000];
+  //ret=fat32_read(fh,buf,10000);
   printf("%s",buf);
-  getchar();
+  */
  
   
 }
