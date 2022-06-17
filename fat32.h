@@ -60,7 +60,7 @@ typedef struct {
 typedef struct {
   fat32* f;                   // pointer to memory file system structure
   FirstFileBlock* ffb;             // pointer to the first block of the file(read it)
-  FirstDirectoryBlock* directory;  // pointer to the directory where the file is stored
+  FirstDirectoryBlock* directory  ;  // pointer to the directory where the file is stored
   int pos_in_file;                 // position of the cursor
 } FileHandle;
 

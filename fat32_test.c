@@ -74,16 +74,13 @@ printf("root num entries %d\n",root->dcb->num_entries);
   if(!fh) printf("Error  creating file");
   DiskDriver_readBlock(disk,ffb,fh->ffb->fcb.block_in_disk);
   printf("%s\n",ffb->fcb.name);
-  
-  
-  /*char*buff=malloc(10000);
-  memset(buff,0,10000);
-  int ret=fat32_write(fh,buff,10000);
+  //write&read testing
+  int ret=fat32_write(fh,"Hell0 W0rld! ;)",16);
   printf("%d\n",ret);
-  char buf[10000];
-  //ret=fat32_read(fh,buf,10000);
+  char buf[16];
+  ret=fat32_read(fh,buf,16);
   printf("%s",buf);
-  */
+  
  
   
 }
