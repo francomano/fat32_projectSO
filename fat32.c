@@ -357,15 +357,77 @@ int fat32_write(FileHandle* f, void* data, int size){
 // returns the number of bytes read
 int fat32_read(FileHandle* f, void* data, int size) {
     int bytes_read=0;
+    int* fat=f->f->disk->fat;
+    int bytes_left_within_block;
     if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)) {
         if(f->pos_in_file+size<BLOCK_SIZE-sizeof(FileControlBlock)) {
             memcpy(data,f->ffb->data+f->pos_in_file,size);
             bytes_read+=size;
         }
+        else {
+            bytes_left_within_block = BLOCK_SIZE-sizeof(FileControlBlock)-f->pos_in_file;
+            //leggo i rimanenti bytes del ffb
+            memcpy(data,f->ffb->data+f->pos_in_file,bytes_left_within_block);
+            bytes_read+=bytes_left_within_block;
+            //calcolo quanti  fileblocks dovrò leggere
+            int num_fileblocks=ceil((size-bytes_read)/sizeof(FileBlock));
+            int first_succ=fat[f->ffb->fcb.block_in_disk];
+            //buffer di ausilio 
+            char buff[BLOCK_SIZE];
+            //leggo prima i fileblocks interi
+            while(num_fileblocks>1 && first_succ!=-1) {
+                DiskDriver_readBlock(f->f->disk,data+bytes_read,first_succ);
+                bytes_read+=BLOCK_SIZE;
+                first_succ=fat[first_succ];
+                num_fileblocks--;
+            }
+            //leggo i bytes rimanenti dell'ultimo blocco 
+            DiskDriver_readBlock(f->f->disk,buff,first_succ);
+            memcpy(data+bytes_read,buff,size-bytes_read);
+            bytes_read+=size-bytes_read;
+        }
     }
-    /*else {
+    else {
+        int current_block=f->pos_in_file/BLOCK_SIZE;
+        int offset=f->pos_in_file%BLOCK_SIZE;
+        //individuo l'indice del blocco corrente
+        int current_block_index=fat[f->ffb->fcb.block_in_disk];
+        while(current_block>0) {
+            current_block_index=fat[current_block_index];
+            current_block--;
+        }
+        if(offset+size<BLOCK_SIZE) {
+            memcpy(data,f->ffb->data+f->pos_in_file,size);
+            bytes_read+=size;
+        }
+        else {
+            bytes_left_within_block=BLOCK_SIZE-offset;
+            //buffer di ausilio 
+            char buff[BLOCK_SIZE];
+            //leggo i rimanenti bytes del current_block
+            DiskDriver_readBlock(f->f->disk,buff,current_block_index);
+            memcpy(data,buff+offset,bytes_left_within_block);
+            bytes_read+=bytes_left_within_block;
+            //calcolo quanti  fileblocks dovrò leggere
+            int num_fileblocks=ceil((size-bytes_read)/sizeof(FileBlock));
+            int first_succ=fat[f->ffb->fcb.block_in_disk];
+            
+            //leggo prima i fileblocks interi
+            while(num_fileblocks>1 && first_succ!=-1) {
+                DiskDriver_readBlock(f->f->disk,data+bytes_read,first_succ);
+                bytes_read+=BLOCK_SIZE;
+                first_succ=fat[first_succ];
+                num_fileblocks--;
+            }
+            //leggo i bytes rimanenti dell'ultimo blocco 
+            DiskDriver_readBlock(f->f->disk,buff,first_succ);
+            memcpy(data+bytes_read,buff,size-bytes_read);
+            bytes_read+=size-bytes_read;
+        }
 
-    }*/
+    }
+    f->pos_in_file+=bytes_read;
+    f->ffb->fcb.size+=bytes_read;
     return bytes_read;
 }
 // returns the number of bytes read (moving the current pointer to pos)
