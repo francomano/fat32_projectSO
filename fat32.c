@@ -233,7 +233,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
         }
     }
     else {
-        int current_block=f->pos_in_file/BLOCK_SIZE;
+        int current_block=ceil(f->pos_in_file-(BLOCK_SIZE-sizeof(FileControlBlock))/BLOCK_SIZE);
         int offset=f->pos_in_file%BLOCK_SIZE;
         //individuo l'indice del blocco corrente
         int current_block_index=fat[f->ffb->fcb.block_in_disk];
