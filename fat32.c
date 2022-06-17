@@ -151,50 +151,205 @@ int fat32_close(FileHandle* f);
 int fat32_write(FileHandle* f, void* data, int size){
     int bytes_written=0;
     int data_first_space=BLOCK_SIZE-sizeof(FileControlBlock);
-    if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)){
+    if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)){ //se il cursore sta nel primo blocco
         if(size<=data_first_space-f->pos_in_file){ //se c'è ancora spazio nel primo blocco dalla posizione in cui sono
             FirstFileBlock* first=f->ffb;
             memcpy(first->data+f->pos_in_file,data,size);
             DiskDriver_writeBlock(f->f->disk,first,f->ffb->fcb.block_in_disk);
+            free(first);
             bytes_written+=size;
         }
         else{ //scrivo un po' nel primo ed il resto nei successori
+            printf("stiamo nel primo blocco e dobbiamo scrivere un po qua un po dopo\n");
              FirstFileBlock* first=f->ffb;
-             int size_to_write=data_first_space-f->pos_in_file;
+             int size_to_write=data_first_space-f->pos_in_file; //size da scrivere nel primo
              memcpy(first->data+f->pos_in_file,data,size_to_write);
              DiskDriver_writeBlock(f->f->disk,first,f->ffb->fcb.block_in_disk);
              bytes_written+=size_to_write;
-             int num_succ=ceil((size-size_to_write)/BLOCK_SIZE);
-             printf("tocca allocare ben %d blocchi\n",num_succ);
-             int index=DiskDriver_getFreeBlock(f->f->disk,f->ffb->fcb.block_in_disk);
-             f->f->disk->fat[f->ffb->fcb.block_in_disk]=index;
-             for(int i=0;i<num_succ;i++){
-                 FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
-                 if(i!=num_succ-1){ //SE NON è L'ULTIMO CHE MI SERVE SCRIVO TUTTO IL BLOCCO
-                    memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,BLOCK_SIZE);
-                    bytes_written+=BLOCK_SIZE;
-                 }
-                else{
+             int num_succ=ceil((double)(size-size_to_write)/(double)BLOCK_SIZE); //blocchi da scrivere
+             printf("scriverò su %d blocchi oltre al primo\n",num_succ);
+             int old_index=f->ffb->fcb.block_in_disk;
+             int index=f->f->disk->fat[old_index]; //prendo successore dalla fat
+             int blocchi_scritti=0;
+             while(index!=-1 && index!=f->ffb->fcb.block_in_disk){ //esistono i successori
+                printf("%d %d\n",index,f->f->disk->fat[index]);
+                FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
+                if(index==f->f->disk->fat[index] && blocchi_scritti+1==num_succ){ //ultimo blocco del file fin'ora
                     int last_size=size-bytes_written;
-                    memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,last_size);
+                    memcpy(block->data,data+size_to_write+blocchi_scritti*BLOCK_SIZE,last_size);
                     bytes_written+=last_size;
+                    DiskDriver_writeBlock(f->f->disk,block,index);
+                    free(block);
+                    blocchi_scritti++;
+                    printf("per ora ho scritto su %d blocchi che erano già presenti e ho finito\n",blocchi_scritti);
+                    break;
                 }
-                printf("iterazione %d\n",i);
-                 DiskDriver_writeBlock(f->f->disk,block,index);
-                 int old_index=index;
-                 f->f->disk->fat[old_index]=index;
-                 index=DiskDriver_getFreeBlock(f->f->disk,old_index);
-                 f->f->disk->fat[old_index]=index;
+                else if(index==f->f->disk->fat[index] && blocchi_scritti+1<num_succ){ //non è l'ultimo da scrivere
+                    memcpy(block->data,data+size_to_write+blocchi_scritti*BLOCK_SIZE,BLOCK_SIZE);
+                    bytes_written+=BLOCK_SIZE;
+                    DiskDriver_writeBlock(f->f->disk,block,index);
+                    free(block);
+                    blocchi_scritti++;
+                    printf("per ora ho scritto su %d blocchi che erano già presenti e devo passare ad allocarne altri\n",blocchi_scritti);
+                    break;
+                }
+                else{
+                    memcpy(block->data,data+size_to_write+blocchi_scritti*BLOCK_SIZE,BLOCK_SIZE);
+                    bytes_written+=BLOCK_SIZE;
+                }
+                    
+                    DiskDriver_writeBlock(f->f->disk,block,index);
+                    free(block);
+                    blocchi_scritti++;
+                    printf("per ora ho scritto su %d blocchi che erano già presenti\n",blocchi_scritti);
+                    old_index=index;
+                    index=f->f->disk->fat[old_index];
+                
 
-             }
+
+                }
+
+            
+             
+            int rimasti=num_succ-blocchi_scritti;
+            
+            if(rimasti>0){
+                int index=DiskDriver_getFreeBlock(f->f->disk,f->ffb->fcb.block_in_disk);
+                
+                
+                for(int i=0;i<rimasti;i++){
+                    f->f->disk->fat[old_index]=index;
+                    FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
+                    if(i!=rimasti-1){ //SE NON è L'ULTIMO CHE MI SERVE SCRIVO TUTTO IL BLOCCO
+                        memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,BLOCK_SIZE);
+                        bytes_written+=BLOCK_SIZE;
+                        f->ffb->fcb.size+=BLOCK_SIZE;
+                        }
+                        else{ //ultimo
+                            int last_size=size-bytes_written;
+                            memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,last_size);
+                            bytes_written+=last_size;
+                            f->ffb->fcb.size+=last_size;
+                        }
+                        printf("ho dovuto allocare fin'ora %d blocchi\n",i+1);
+                        DiskDriver_writeBlock(f->f->disk,block,index);
+                        free(block);
+                        old_index=index;
+                        f->f->disk->fat[old_index]=index;
+                        index=DiskDriver_getFreeBlock(f->f->disk,old_index);
+                        
+
+                    }
+            }
         }
+            
     }
     else{
-        //INCOMPLETA
+        
+        printf("il cursore non è nel primo blocco, alloco nuovi\n");
+        int blocchi_da_scorrere=ceil((double)(f->pos_in_file-(BLOCK_SIZE-sizeof(FileControlBlock)))/(double)BLOCK_SIZE);
+        int old_index=f->ffb->fcb.block_in_disk;
+        int index=f->f->disk->fat[old_index]; 
+        blocchi_da_scorrere--;
+        while(blocchi_da_scorrere){
+            old_index=index;
+            index=f->f->disk->fat[old_index]; 
+            blocchi_da_scorrere--;
+        }
+        int offset=f->pos_in_file%BLOCK_SIZE;
+        int size_to_write=BLOCK_SIZE-offset;
+        if(size<=size_to_write){
+            FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
+            memcpy(block->data+offset,data,size);
+            bytes_written+=size;
+            DiskDriver_writeBlock(f->f->disk,block,index);
+            free(block);
+        }
+        else{
+            FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
+            memcpy(block->data,data,size_to_write);
+            bytes_written+=size_to_write;
+            DiskDriver_writeBlock(f->f->disk,block,index);
+            free(block);
+            int num_succ=ceil((double)(size-size_to_write)/(double)BLOCK_SIZE); //blocchi da scrivere
+             printf("scriverò su %d blocchi\n",num_succ);
+             int blocchi_scritti=0;
+             if(index!=old_index){ //ce ne sono altri
+                while(index!=-1){ 
+                    FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
+                    if(index==f->f->disk->fat[index] && blocchi_scritti+1==num_succ){ //ultimo blocco del file fin'ora
+                        int last_size=size-bytes_written;
+                        memcpy(block->data,data+size_to_write+blocchi_scritti*BLOCK_SIZE,last_size);
+                        bytes_written+=last_size;
+                        DiskDriver_writeBlock(f->f->disk,block,index);
+                        free(block);
+                        blocchi_scritti++;
+                        printf("per ora ho scritto su %d blocchi che erano già presenti e ho finito\n",blocchi_scritti);
+                        break;
+                    }
+                    else if(index==f->f->disk->fat[index] && blocchi_scritti+1<num_succ){ //non è l'ultimo da scrivere
+                        memcpy(block->data,data+size_to_write+blocchi_scritti*BLOCK_SIZE,BLOCK_SIZE);
+                        bytes_written+=BLOCK_SIZE;
+                        DiskDriver_writeBlock(f->f->disk,block,index);
+                        free(block);
+                        blocchi_scritti++;
+                        printf("per ora ho scritto su %d blocchi che erano già presenti e devo allocarne altri\n",blocchi_scritti);
+                        break;
+
+                    }
+                    else{
+                        memcpy(block->data,data+size_to_write+blocchi_scritti*BLOCK_SIZE,BLOCK_SIZE);
+                        bytes_written+=BLOCK_SIZE;
+                    }
+                        
+                        DiskDriver_writeBlock(f->f->disk,block,index);
+                        free(block);
+                        blocchi_scritti++;
+                        printf("per ora ho scritto su %d blocchi che erano già presenti",blocchi_scritti);
+                        old_index=index;
+                        index=f->f->disk->fat[old_index];
+
+
+                    }
+             }
+
+
+             
+            int rimasti=num_succ-blocchi_scritti;
+            printf("devo allocare ancora %d blocchi\n",rimasti);
+            if(rimasti>0){
+                int index=DiskDriver_getFreeBlock(f->f->disk,f->ffb->fcb.block_in_disk);
+            
+                
+                for(int i=0;i<rimasti;i++){
+                    f->f->disk->fat[old_index]=index;
+                    FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
+                    if(i!=rimasti-1){ //SE NON è L'ULTIMO CHE MI SERVE SCRIVO TUTTO IL BLOCCO
+                        memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,BLOCK_SIZE);
+                        bytes_written+=BLOCK_SIZE;
+                        f->ffb->fcb.size+=BLOCK_SIZE;
+                        }
+                        else{ //ultimo
+                            int last_size=size-bytes_written;
+                            memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,last_size);
+                            bytes_written+=last_size;
+                            f->ffb->fcb.size+=last_size;
+                        }
+                        printf("ho dovuto allocare fin'ora %d blocchi\n",i+1);
+                        DiskDriver_writeBlock(f->f->disk,block,index);
+                        free(block);
+                        old_index=index;
+                        f->f->disk->fat[old_index]=index;
+                        index=DiskDriver_getFreeBlock(f->f->disk,old_index);
+                        
+                            
+
+                    }
+            }
+        }
 
     }
     f->pos_in_file+=bytes_written;
-    f->ffb->fcb.size+=bytes_written;
     return bytes_written;
 }
 
