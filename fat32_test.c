@@ -74,20 +74,28 @@ printf("root num entries %d\n",root->dcb->num_entries);
   printf("%s\n",ffb->fcb.name);
   
   printf("cursore a %d\n",fh->pos_in_file);
-  char*buff=malloc(10000);
-  memset(buff,0,10000);
-  int ret=fat32_write(fh,buff,10000);
+  char*buff=malloc(1000);
+  memset(buff,1,1000);
+  int ret=fat32_write(fh,buff,1000);
   printf("%d\n",ret);
   fh->pos_in_file=0;
-  ret=fat32_write(fh,buff,10000);
+  ret=fat32_write(fh,buff,1000);
   printf("%d\n",ret);
-  ret=fat32_write(fh,buff,10000);
+  ret=fat32_write(fh,buff,1000);
   printf("%d\n",ret);
   
 
-  //char buf[1000];
-  //ret=fat32_read(fh,buf,10000);
-  //printf("%s",buf);
+  char buf[1000];
+  char buf2[1000];
+  ret=fat32_read(fh,buf,1000);
+  printf("%d\n",*(buf+900));
+
+  ret=fat32_read(fh,buf2,1000);
+  printf("%d\n",*(buf2+990));
+
+  printf("filesize: %d\n",fh->ffb->fcb.size);
+
+
   
  
   
