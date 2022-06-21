@@ -95,11 +95,14 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 
 //marco
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
-   if(block_num==disk->header->first_free_block) //ATOMIC se scrivo nel first free block cerco il prossimo e sovrascrivo
+   //SI ASSUME CHE SI SCRIVE SU NUOVI BLOCCHI SOLO DOPO AVER CHIAMATO GETFREEBLOCK
+   if(block_num==disk->header->first_free_block){ //ATOMIC se scrivo nel first free block cerco il prossimo e sovrascrivo
       disk->header->first_free_block=DiskDriver_getFreeBlock(disk,disk->header->first_free_block);
+      disk->header->free_blocks--;
+   }
    int fd=disk->fd;
    int ret=lseek(fd,sysconf(_SC_PAGE_SIZE)+disk->header->num_blocks*sizeof(int)+BLOCK_SIZE*block_num,SEEK_SET);
-   printf("ret seek = %d\n",ret);
+   //printf("ret seek = %d\n",ret);
    if(ret<0){
       perror("seek");
       return -1;
@@ -109,7 +112,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
       perror("write block error");
       return -1;
    }
-   disk->header->free_blocks--;
+ 
    return ret;
 
    
