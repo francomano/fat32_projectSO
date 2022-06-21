@@ -81,10 +81,13 @@ printf("root num entries %d\n",root->dcb->num_entries);
   printf("%d\n",ret);
   fh->pos_in_file=0;
   memset(buff,0,1000);
+  printf("root dirsize: %d\n",root->dcb->fcb.size);
   ret=fat32_write(fh,buff,1000);
   printf("%d\n",ret);
+  printf("root dirsize: %d\n",root->dcb->fcb.size);
   ret=fat32_write(fh,buff,1000);
   printf("%d\n",ret);
+  printf("root dirsize: %d\n",root->dcb->fcb.size);
   
 
   char buf[1000];

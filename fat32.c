@@ -66,6 +66,7 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
     ffb_copy->fcb.block_in_disk=block_index;
     strcpy(ffb_copy->fcb.name,filename);
     ffb_copy->fcb.size=BLOCK_SIZE-sizeof(FileControlBlock);
+    fh->directory->fcb.size+=ffb_copy->fcb.size;
     ffb_copy->fcb.is_dir=0;
     int ret=DiskDriver_writeBlock(d->f->disk,fh->ffb, block_index);
     printf("write %d bytes for the new file\n",ret);
@@ -150,6 +151,7 @@ int fat32_close(FileHandle* f);
 //marco
 int fat32_write(FileHandle* f, void* data, int size){
     int bytes_written=0;
+    int added_size=0;
     int data_first_space=BLOCK_SIZE-sizeof(FileControlBlock);
     if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)){ //se il cursore sta nel primo blocco
         if(size<=data_first_space-f->pos_in_file){ //se c'è ancora spazio nel primo blocco dalla posizione in cui sono
@@ -160,19 +162,19 @@ int fat32_write(FileHandle* f, void* data, int size){
             bytes_written+=size;
         }
         else{ //scrivo un po' nel primo ed il resto nei successori
-            printf("stiamo nel primo blocco e dobbiamo scrivere un po qua un po dopo\n");
+            //printf("stiamo nel primo blocco e dobbiamo scrivere un po qua un po dopo\n");
              FirstFileBlock* first=f->ffb;
              int size_to_write=data_first_space-f->pos_in_file; //size da scrivere nel primo
              memcpy(first->data+f->pos_in_file,data,size_to_write);
              DiskDriver_writeBlock(f->f->disk,first,f->ffb->fcb.block_in_disk);
              bytes_written+=size_to_write;
              int num_succ=ceil((double)(size-size_to_write)/(double)BLOCK_SIZE); //blocchi da scrivere
-             printf("scriverò su %d blocchi oltre al primo\n",num_succ);
+             //printf("scriverò su %d blocchi oltre al primo\n",num_succ);
              int old_index=f->ffb->fcb.block_in_disk;
              int index=f->f->disk->fat[old_index]; //prendo successore dalla fat
              int blocchi_scritti=0;
              while(index!=-1 && index!=f->ffb->fcb.block_in_disk){ //esistono i successori
-                printf("%d %d\n",index,f->f->disk->fat[index]);
+                //printf("%d %d\n",index,f->f->disk->fat[index]);
                 FileBlock* block=(FileBlock*)malloc(sizeof(BLOCK_SIZE));
                 if(index==f->f->disk->fat[index] && blocchi_scritti+1==num_succ){ //ultimo blocco del file fin'ora
                     int last_size=size-bytes_written;
@@ -181,7 +183,7 @@ int fat32_write(FileHandle* f, void* data, int size){
                     DiskDriver_writeBlock(f->f->disk,block,index);
                     free(block);
                     blocchi_scritti++;
-                    printf("per ora ho scritto su %d blocchi che erano già presenti e ho finito\n",blocchi_scritti);
+                    //printf("per ora ho scritto su %d blocchi che erano già presenti e ho finito\n",blocchi_scritti);
                     break;
                 }
                 else if(index==f->f->disk->fat[index] && blocchi_scritti+1<num_succ){ //non è l'ultimo da scrivere
@@ -190,7 +192,7 @@ int fat32_write(FileHandle* f, void* data, int size){
                     DiskDriver_writeBlock(f->f->disk,block,index);
                     free(block);
                     blocchi_scritti++;
-                    printf("per ora ho scritto su %d blocchi che erano già presenti e devo passare ad allocarne altri\n",blocchi_scritti);
+                    //printf("per ora ho scritto su %d blocchi che erano già presenti e devo passare ad allocarne altri\n",blocchi_scritti);
                     break;
                 }
                 else{
@@ -201,7 +203,7 @@ int fat32_write(FileHandle* f, void* data, int size){
                     DiskDriver_writeBlock(f->f->disk,block,index);
                     free(block);
                     blocchi_scritti++;
-                    printf("per ora ho scritto su %d blocchi che erano già presenti\n",blocchi_scritti);
+                    //printf("per ora ho scritto su %d blocchi che erano già presenti\n",blocchi_scritti);
                     old_index=index;
                     index=f->f->disk->fat[old_index];
                 
@@ -224,16 +226,18 @@ int fat32_write(FileHandle* f, void* data, int size){
                         memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,BLOCK_SIZE);
                         bytes_written+=BLOCK_SIZE;
                         f->ffb->fcb.size+=BLOCK_SIZE;
-                        printf("ora la size è %d\n",f->ffb->fcb.size);
+                        added_size+=BLOCK_SIZE;
+                        //printf("ora la size è %d\n",f->ffb->fcb.size);
                         }
                         else{ //ultimo
                             int last_size=size-bytes_written;
                             memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,last_size);
                             bytes_written+=last_size;
                             f->ffb->fcb.size+=BLOCK_SIZE;
+                            added_size+=BLOCK_SIZE;
                             printf("ora la size è %d\n",f->ffb->fcb.size);
                         }
-                        printf("ho dovuto allocare fin'ora %d blocchi\n",i+1);
+                        //printf("ho dovuto allocare fin'ora %d blocchi\n",i+1);
                         DiskDriver_writeBlock(f->f->disk,block,index);
                         free(block);
                         old_index=index;
@@ -248,7 +252,7 @@ int fat32_write(FileHandle* f, void* data, int size){
     }
     else{
         
-        printf("il cursore non è nel primo blocco, alloco nuovi\n");
+        //printf("il cursore non è nel primo blocco, alloco nuovi\n");
         int blocchi_da_scorrere=ceil((double)(f->pos_in_file-(BLOCK_SIZE-sizeof(FileControlBlock)))/(double)BLOCK_SIZE);
         int old_index=f->ffb->fcb.block_in_disk;
         int index=f->f->disk->fat[old_index]; 
@@ -275,7 +279,7 @@ int fat32_write(FileHandle* f, void* data, int size){
             DiskDriver_writeBlock(f->f->disk,block,index);
             free(block);
             int num_succ=ceil((double)(size-size_to_write)/(double)BLOCK_SIZE); //blocchi da scrivere
-             printf("scriverò su %d blocchi\n",num_succ);
+             //printf("scriverò su %d blocchi\n",num_succ);
              int blocchi_scritti=0;
              if(index!=f->f->disk->fat[index]){ //ce ne sono altri
                 while(index!=-1){ 
@@ -287,7 +291,7 @@ int fat32_write(FileHandle* f, void* data, int size){
                         DiskDriver_writeBlock(f->f->disk,block,index);
                         free(block);
                         blocchi_scritti++;
-                        printf("per ora ho scritto su %d blocchi che erano già presenti e ho finito\n",blocchi_scritti);
+                        //printf("per ora ho scritto su %d blocchi che erano già presenti e ho finito\n",blocchi_scritti);
                         break;
                     }
                     else if(index==f->f->disk->fat[index] && blocchi_scritti+1<num_succ){ //non è l'ultimo da scrivere
@@ -296,7 +300,7 @@ int fat32_write(FileHandle* f, void* data, int size){
                         DiskDriver_writeBlock(f->f->disk,block,index);
                         free(block);
                         blocchi_scritti++;
-                        printf("per ora ho scritto su %d blocchi che erano già presenti e devo allocarne altri\n",blocchi_scritti);
+                        //printf("per ora ho scritto su %d blocchi che erano già presenti e devo allocarne altri\n",blocchi_scritti);
                         break;
 
                     }
@@ -308,7 +312,7 @@ int fat32_write(FileHandle* f, void* data, int size){
                         DiskDriver_writeBlock(f->f->disk,block,index);
                         free(block);
                         blocchi_scritti++;
-                        printf("per ora ho scritto su %d blocchi che erano già presenti",blocchi_scritti);
+                        //printf("per ora ho scritto su %d blocchi che erano già presenti",blocchi_scritti);
                         old_index=index;
                         index=f->f->disk->fat[old_index];
 
@@ -331,16 +335,18 @@ int fat32_write(FileHandle* f, void* data, int size){
                         memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,BLOCK_SIZE);
                         bytes_written+=BLOCK_SIZE;
                         f->ffb->fcb.size+=BLOCK_SIZE;
-                        printf("ora la size è %d\n",f->ffb->fcb.size);
+                        added_size+=BLOCK_SIZE;
+                        //printf("ora la size è %d\n",f->ffb->fcb.size);
                         }
                         else{ //ultimo
                             int last_size=size-bytes_written;
                             memcpy(block->data,data+size_to_write+i*BLOCK_SIZE,last_size);
                             bytes_written+=last_size;
                             f->ffb->fcb.size+=BLOCK_SIZE;
-                            printf("ora la size è %d e abbiamo finito\n",f->ffb->fcb.size);
+                            added_size+=BLOCK_SIZE;
+                            //printf("ora la size è %d e abbiamo finito\n",f->ffb->fcb.size);
                         }
-                        printf("ho dovuto allocare fin'ora %d blocchi\n",i+1);
+                        //printf("ho dovuto allocare fin'ora %d blocchi\n",i+1);
                         DiskDriver_writeBlock(f->f->disk,block,index);
                         free(block);
                         old_index=index;
@@ -356,11 +362,16 @@ int fat32_write(FileHandle* f, void* data, int size){
     }
     f->pos_in_file+=bytes_written;
     DirectoryHandle* fakedir=(DirectoryHandle*)malloc(sizeof(DirectoryHandle));
-    printf("cwd: %s\n",f->f->cwd->fcb.name);
+    //printf("cwd: %s\n",f->f->cwd->fcb.name);
     fakedir->dcb=f->f->cwd;
-    fakedir->directory=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
-    DiskDriver_readBlock(f->f->disk,fakedir->directory,f->f->cwd->fcb.directory_block);
-    fat32_update_size(fakedir,bytes_written);
+    fakedir->directory=NULL;
+    
+    if(strcmp(f->f->cwd->fcb.name,"/\0")){
+        fakedir->directory=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
+        DiskDriver_readBlock(f->f->disk,fakedir->directory,f->f->cwd->fcb.directory_block);
+    }
+    fat32_update_size(fakedir,added_size);
+    free(fakedir);
     return bytes_written;
 }
 
@@ -446,9 +457,13 @@ int fat32_read(FileHandle* f, void* data, int size) {
 int fat32_update_size(DirectoryHandle* d,int num) {
     printf("I'M IN!!\n");
     if(d->directory==NULL) {
+        printf("aggiorno di %d\n",num);
+        printf("prima è %d\n",d->dcb->fcb.size);
         d->dcb->fcb.size+=num;
+        printf("ora è %d\n",d->dcb->fcb.size);
         return 0;
     }
+    
     d->dcb->fcb.size+=num;
     FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
     DiskDriver_readBlock(d->f->disk,aux,d->directory->fcb.directory_block);
