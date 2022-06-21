@@ -59,14 +59,9 @@ printf("root num entries %d\n",root->dcb->num_entries);
  
 
    
-  if(fat32_changeDir(root,"..")){
-    printf("errore nella changeDir\n");
-  }
-  if(fat32_changeDir(root,"..")){
-    printf("errore nella changeDir\n");
-  }
+  
   printf("%s",root->dcb->fcb.name);
-  printf("root num entries dopo aver fatto avanti e indietro nelle cartelle %d\n",root->dcb->num_entries);
+  //printf("root num entries dopo aver fatto avanti e indietro nelle cartelle %d\n",root->dcb->num_entries);
   FileHandle* fh=fat32_createFile(root,"file_test.txt");
   FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
   if(!fh) printf("Error  creating file");
@@ -101,6 +96,12 @@ printf("root num entries %d\n",root->dcb->num_entries);
   printf("%d\n",*(buf2));
   printf("filesize: %d\n",fh->ffb->fcb.size);
   printf("cursore a %d\n",fh->pos_in_file);
+  if(fat32_changeDir(root,"..")){
+    printf("errore nella changeDir\n");
+  }
+  if(fat32_changeDir(root,"..")){
+    printf("errore nella changeDir\n");
+  }
   printf("root dirsize: %d\n",root->dcb->fcb.size);
 
   
