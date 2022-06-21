@@ -72,13 +72,15 @@ printf("root num entries %d\n",root->dcb->num_entries);
   if(!fh) printf("Error  creating file");
   DiskDriver_readBlock(disk,ffb,fh->ffb->fcb.block_in_disk);
   printf("%s\n",ffb->fcb.name);
-  
+  printf("root dirsize: %d\n",root->dcb->fcb.size);
   printf("cursore a %d\n",fh->pos_in_file);
   char*buff=malloc(1000);
   memset(buff,1,1000);
+  //memcpy(buff,"Hello W0rld!",13);
   int ret=fat32_write(fh,buff,1000);
   printf("%d\n",ret);
   fh->pos_in_file=0;
+  memset(buff,0,1000);
   ret=fat32_write(fh,buff,1000);
   printf("%d\n",ret);
   ret=fat32_write(fh,buff,1000);
@@ -88,13 +90,15 @@ printf("root num entries %d\n",root->dcb->num_entries);
   char buf[1000];
   char buf2[1000];
   ret=fat32_read(fh,buf,1000);
-  printf("%d\n",*(buf+900));
+  printf("%d\n",*(buf));
 
   ret=fat32_read(fh,buf2,1000);
   printf("%d\n",*(buf2+990));
-
+  ret=fat32_read(fh,buf2,1000);
+  printf("%d\n",*(buf2));
   printf("filesize: %d\n",fh->ffb->fcb.size);
-
+  printf("cursore a %d\n",fh->pos_in_file);
+  printf("root dirsize: %d\n",root->dcb->fcb.size);
 
   
  

@@ -119,6 +119,7 @@ int fat32_seek(FileHandle* f, int pos);
 // it does side effect on the provided handle
  int fat32_changeDir(DirectoryHandle* d, char* dirname);
 
+int fat32_update_size(DirectoryHandle* d,int num);
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
 // -1 on error
