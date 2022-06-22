@@ -4,7 +4,7 @@ CC=gcc
 AR=ar
 
 
-BINS= fat32_test
+BINS= shell
 
 OBJS=disk_driver.o\
 	 fat32.o
@@ -21,7 +21,7 @@ HEADERS=disk_driver.h\
 
 all:	$(BINS) 
 
-fat32_test: fat32_test.c $(OBJS) 
+shell: shell.c $(OBJS) 
 	$(CC) $(CCOPTS)  -o $@ $^ $(LIBS)
 
 clean:

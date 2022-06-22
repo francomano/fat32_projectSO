@@ -100,7 +100,7 @@ int main(int agc, char** argv) {
     printf("errore nella changeDir\n");
   }
 
-  FileHandle* fh1=fat32_openFile(root,"hello.txt");
+  FileHandle* fh1=fat32_openFile(root,"file_test.txt");
   assert(!fh&&"FILE INESISTENTE");
   printf("Ho aperto il file: %s\n",fh1->ffb->fcb.name);
  
