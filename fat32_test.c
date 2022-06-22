@@ -93,6 +93,27 @@ int main(int agc, char** argv) {
   if(fat32_changeDir(root,"..")){
     printf("errore nella changeDir\n");
   }
+  if(fat32_changeDir(root,"prova")){
+    printf("errore nella changeDir\n");
+  }
+   if(fat32_changeDir(root,"prova3")){
+    printf("errore nella changeDir\n");
+  }
+
+  char**names=(char**)malloc(sizeof(char*)*100);
+  for(int i=0;i<100;i++){
+    names[i]=(char*)malloc(64);
+  }
+  fat32_listDir(names,root);
+  int i=0;
+  int entries=root->dcb->num_entries;
+  while(entries){
+    printf("%s\n",names[i]);
+    i++;
+    entries--;
+  }
+
+  free(names);
 
 
   

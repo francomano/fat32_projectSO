@@ -88,6 +88,7 @@ void fat32_format(fat32* fs);
 // an empty file consists only of a block of type FirstBlock
 FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename);
 
+int fat32_listDir(char** names, DirectoryHandle* d);
 // reads in the (preallocated) blocks array, the name of all files in a directory 
 int fat32_readDir(char** names, DirectoryHandle* d);
 

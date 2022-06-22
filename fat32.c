@@ -133,7 +133,35 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
 
 
 // reads in the (preallocated) blocks array, the name of all files in a directory 
-int fat32_listDir(char** names, DirectoryHandle* d);
+int fat32_listDir(char** names, DirectoryHandle* d){
+    int i=0;
+    int entries=d->dcb->num_entries;
+    FirstDirectoryBlock* buf=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
+    while(d->dcb->file_blocks[i]!=-1){
+        DiskDriver_readBlock(d->f->disk,buf,d->dcb->file_blocks[i]);
+        strcpy(names[i],buf->fcb.name);
+        entries--;
+        i++;
+    }
+    while(entries){
+        int*fat=d->f->disk->fat;
+        int succ=fat[d->dcb->fcb.block_in_disk];
+        DirectoryBlock* buf=(DirectoryBlock*)buf;
+        DiskDriver_readBlock(d->f->disk,buf,succ);
+        i=0;
+        FirstDirectoryBlock* buf2=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
+        while(buf->file_blocks[i]!=-1){
+            DiskDriver_readBlock(d->f->disk,buf2,buf->file_blocks[i]);
+            strcpy(names[i],buf2->fcb.name);
+            entries--;
+            i++;
+        }
+        succ=fat[succ];
+        free(buf2);
+    }
+    free(buf);
+    return 0;
+}
 
 
 // opens a file in the  directory d. The file should be exisiting
