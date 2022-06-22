@@ -18,7 +18,7 @@ char* cmd[13]= {
 
 int main(int argc, char** argv) {
     if(argc<2) {
-        printf("Inserire il numero di blocchi");
+        printf("Inserire il numero di blocchi da allocare nel disco\n");
         return 0;
     }
     int num_blocks=atoi(argv[1]);
@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
         printf("%s\t",cmd[i]);
         if(i!=0 && i%2==0) printf("\n");
     }
+    printf("you are in %s\n",root->dcb->fcb.name);
     while(1) {
         char user_cmd[10];
         scanf("%s",user_cmd);

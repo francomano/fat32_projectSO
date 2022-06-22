@@ -146,18 +146,19 @@ int fat32_listDir(char** names, DirectoryHandle* d){
     while(entries){
         int*fat=d->f->disk->fat;
         int succ=fat[d->dcb->fcb.block_in_disk];
-        DirectoryBlock* buf=(DirectoryBlock*)buf;
-        DiskDriver_readBlock(d->f->disk,buf,succ);
+        DirectoryBlock* buf3=(DirectoryBlock*)malloc(sizeof(DirectoryBlock));
+        DiskDriver_readBlock(d->f->disk,buf3,succ);
         i=0;
         FirstDirectoryBlock* buf2=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
-        while(buf->file_blocks[i]!=-1){
-            DiskDriver_readBlock(d->f->disk,buf2,buf->file_blocks[i]);
+        while(buf3->file_blocks[i]!=-1){
+            DiskDriver_readBlock(d->f->disk,buf2,buf3->file_blocks[i]);
             strcpy(names[i],buf2->fcb.name);
             entries--;
             i++;
         }
         succ=fat[succ];
         free(buf2);
+        free(buf3);
     }
     free(buf);
     return 0;
@@ -792,6 +793,7 @@ int fat32_remove(fat32* fs, char* filename) {
         DiskDriver_readBlock(fs->disk,fcb,fs->cwd->fcb.block_in_disk);
         if(!strcmp(fs->c))
     }*/
+    return -1;
 }
 
 
