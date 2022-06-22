@@ -163,13 +163,59 @@ int fat32_listDir(char** names, DirectoryHandle* d){
     return 0;
 }
 
-
+char** filename_alloc() {
+    char**names=(char**)malloc(sizeof(char*)*100);
+    for(int i=0;i<100;i++){
+        names[i]=(char*)malloc(64);
+    }
+    return names;
+}
+void filename_dealloc(char** names) {
+    for(int i=0;i<100;i++){
+        free(names[i]);
+    }
+    free(names);
+}
 // opens a file in the  directory d. The file should be exisiting
-FileHandle* fat32_openFile(DirectoryHandle* d, const char* filename);
+FileHandle* fat32_openFile(DirectoryHandle* d, const char* filename) {
+    if(d==NULL || filename==NULL) return NULL;
+    char** names=filename_alloc();
+    fat32_listDir(names,d);
+    int entries=d->dcb->num_entries;
+    int i=0;
+    while(entries>0){
+        if(!(strcmp(names[i],filename))) {
+            FileHandle* fh=(FileHandle*)malloc(sizeof(FileHandle));
+            fh->directory=d->dcb;
+            fh->f=d->f;
+            int index=d->dcb->file_blocks[i];
+            FirstFileBlock* fdb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+            DiskDriver_readBlock(d->f->disk,fdb,index);
+            fh->ffb=fdb;
+            fh->pos_in_file=0;
+            filename_dealloc(names);
+            return fh;
+        }
+        i++;
+        entries--;
+    }
+    filename_dealloc(names);
+    printf("File %s non presente nella cwd\n",filename);
+    return NULL;
+}
 
 
 // closes a file handle (destroyes it)
-int fat32_close(FileHandle* f);
+int fat32_close(FileHandle* f) {
+    if(f==NULL) {
+        printf("FileHandle inesistente");
+        return -1;
+    }
+    free(f->directory);
+    free(f->ffb);
+    free(f);
+    return 0;
+}
 
 // writes in the file, at current position for size bytes stored in data
 // overwriting and allocating new space if necessary
@@ -737,7 +783,16 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
 // removes the file in the current directory
 // returns -1 on failure 0 on success
 // if a directory, it removes recursively all contained files
-int fat32_remove(fat32* fs, char* filename);
+int fat32_remove(fat32* fs, char* filename) {
+    //cerco il filename in cwd
+    /*int entries=fs->cwd->num_entries;
+    int i=0;
+    FileControlBlock* fcb=(FileControlBlock*)malloc(sizeof(FileControlBlock));
+    while(fs->cwd->file_blocks[i]!=-1) {
+        DiskDriver_readBlock(fs->disk,fcb,fs->cwd->fcb.block_in_disk);
+        if(!strcmp(fs->c))
+    }*/
+}
 
 
   

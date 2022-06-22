@@ -100,23 +100,10 @@ int main(int agc, char** argv) {
     printf("errore nella changeDir\n");
   }
 
-  char**names=(char**)malloc(sizeof(char*)*100);
-  for(int i=0;i<100;i++){
-    names[i]=(char*)malloc(64);
-  }
-  fat32_listDir(names,root);
-  int i=0;
-  int entries=root->dcb->num_entries;
-  while(entries){
-    printf("%s\n",names[i]);
-    i++;
-    entries--;
-  }
-
-  free(names);
-
-
-  
+  FileHandle* fh1=fat32_openFile(root,"hello.txt");
+  assert(!fh&&"FILE INESISTENTE");
+  printf("Ho aperto il file: %s\n",fh1->ffb->fcb.name);
+ 
  
   
 }
