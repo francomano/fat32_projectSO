@@ -66,22 +66,20 @@ int main(int agc, char** argv) {
    printf("prova3 dirsize dopo la terza write: %d\n",root->dcb->fcb.size);
   printf("%d\n",ret);
   printf("prova3 dirsize: %d\n",root->dcb->fcb.size);
-  printf("%s\n",root->dcb->fcb.name);
   
 
 
  //SEZIONE READ
  
   char buf[1000];
-  char buf2[1000];
   fh->pos_in_file=0;
   ret=fat32_read(fh,buf,1000);
-  printf("%d\n",ret);
+  printf("nella prima lettura ho letto %d\n",ret);
 
-  ret=fat32_read(fh,buf2,1000);
-  printf("%d\n",ret);
-  ret=fat32_read(fh,buf2,1000);
-  printf("%d\n",ret);
+  ret=fat32_read(fh,buf,1000);
+  printf("nella seconda lettura ho letto %d\n",ret);
+  ret=fat32_read(fh,buf,1000);
+  printf("nella terza lettura ho letto %d\n",ret);
   printf("filesize: %d\n",fh->ffb->fcb.size);
   printf("cursore a %d\n",fh->pos_in_file);
 
