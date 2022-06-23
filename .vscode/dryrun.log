@@ -2,6 +2,6 @@ make --dry-run --always-make --keep-going --print-directory
 make: Entering directory `/Users/Marco/Desktop/fat32_projectSO'
 gcc -Wall -g -std=gnu99 -Wstrict-prototypes -lm -c -o disk_driver.o  disk_driver.c
 gcc -Wall -g -std=gnu99 -Wstrict-prototypes -lm -c -o fat32.o  fat32.c
-gcc -Wall -g -std=gnu99 -Wstrict-prototypes -lm  -o fat32_test fat32_test.c disk_driver.o fat32.o 
+gcc -Wall -g -std=gnu99 -Wstrict-prototypes -lm  -o shell shell.c disk_driver.o fat32.o 
 make: Leaving directory `/Users/Marco/Desktop/fat32_projectSO'
  
