@@ -623,10 +623,10 @@ int fat32_seek(FileHandle* f, int pos){
 //marco
 int fat32_changeDir(DirectoryHandle* d, char* dirname){
     if(!strcmp(dirname,"..")){
+        if(!strcmp(d->dcb->fcb.name,"/")) return 0;
         FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
         if(d->directory->fcb.block_in_disk==0){
-             DiskDriver_readBlock(d->f->disk,aux,0);
-             d->dcb=aux;
+             DiskDriver_readBlock(d->f->disk,d->dcb,0);
              d->directory=NULL;
         }
         else{

@@ -21,7 +21,7 @@ char* cmd[NUMCMD]= {
     "cd","mkDir","rm","exit"
 };
 
-int ret;
+
 
 //LIST OF FILEHANDLES
 
@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
         printf("Inserire il nome del disco\n");
         return 0;
     }
+    int ret;
     //READ THE DISK
     char filename[64];
     strcpy(filename,argv[1]);
@@ -42,7 +43,8 @@ int main(int argc, char** argv) {
     disk->fat =mmap(0,100*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,sysconf(_SC_PAGE_SIZE));
     fs->disk=disk;
     fs->cwd=(FirstDirectoryBlock*)malloc(BLOCK_SIZE);
-    DiskDriver_readBlock(disk,fs->cwd,0);
+    ret=DiskDriver_readBlock(disk,fs->cwd,0);
+    assert(ret && "Errore lettura disco");
     root->directory=NULL;
     root->dcb=fs->cwd;
     root->f=fs;
@@ -94,26 +96,38 @@ int main(int argc, char** argv) {
             }
             else if (!strcmp(CMD,"cd"))
             {
-                int len2=strlen(root->f->cwd->fcb.name)+1;
-                ret=fat32_changeDir(root,ARG);
-                if(ret!=-1){
-                    if(!strcmp(ARG,"..")){
-                        int len1=strlen(path);
-                        int newlen=len1-len2;
-                        char* s=(char*)malloc(64);
-                        strncpy(s,path,newlen);
-                        path=s;
-                        
+                
+            
+                if(!strcmp(ARG,"..") && strcmp(root->dcb->fcb.name,"/")){
+                    int len2=strlen(root->f->cwd->fcb.name)+1;
+                    int len1=strlen(path);
+                    int newlen=len1-len2;
+                    char* s=(char*)malloc(LENPATH);
+                    char*temp=path;
+                    strncpy(s,path,newlen);                        path=s;
+                    free(temp);
+                    ret=fat32_changeDir(root,ARG);
+                    if(ret) {
+                        printf("something went wrong\n");
                     }
-                    else{
-                        strcat(path,root->f->cwd->fcb.name);
-                        strcat(path,"/");
+                    
                         
-                    }
+                }
+                else if(!strcmp(ARG,"..") && !strcmp(root->dcb->fcb.name,"/")){
+
                 }
                 else{
-                    printf("cartella inesistente\n");
-                }
+                    ret=fat32_changeDir(root,ARG);
+                    if(ret) {
+                        printf("something went wrong\n");
+                    }
+                    else{
+                        strcat(path,root->f->cwd->fcb.name);                        
+                        strcat(path,"/");
+                    }
+                        
+                    }
+                
             }
             else if (!strcmp(CMD,"mkDir"))
             {
@@ -130,6 +144,12 @@ int main(int argc, char** argv) {
     }
 
 
-    //FREE SECTION
-    return 0;
+
+ 
+    //cleanup
+    free(disk);
+    free(fs->cwd);
+    free(fs);
+    free(root);
+    free(path);
 }
