@@ -55,6 +55,19 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
     if(block_index==-1){
         return 0;
     }
+    int entries=d->dcb->num_entries-1;
+    FirstFileBlock* aux=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+    while(entries>0) {
+        int index=d->dcb->file_blocks[entries];
+        DiskDriver_readBlock(d->f->disk,aux,index);
+        if(!strcmp(aux->fcb.name,filename)) {
+            free(aux);
+            printf("File gia esistente\n");
+            return 0;
+        }
+        entries--;
+    }
+    free(aux);
     FileHandle* fh=(FileHandle*)malloc(sizeof(FileHandle));//inizializzo il file_handle
     fh->f=d->f;
     fh->pos_in_file=0;
@@ -459,9 +472,16 @@ int fat32_read(FileHandle* f, void* data, int size) {
     int bytes_left_within_block;
     if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)) { //siamo col cursore nel primo
         if(f->pos_in_file+size<BLOCK_SIZE-sizeof(FileControlBlock)) {
-            memcpy(data,f->ffb->data+f->pos_in_file,size);
-            bytes_read+=size;
-        }
+            if(size+f->pos_in_file<=f->ffb->fcb.size) {
+                memcpy(data,f->ffb->data+f->pos_in_file,size);
+                bytes_read+=size;
+            }
+            else {
+                int left=f->ffb->fcb.size-f->pos_in_file;
+                memcpy(data,f->ffb->data+f->pos_in_file,left);
+                bytes_read+=left;
+            }
+        }   
         else {
             int pos_offset=f->pos_in_file;
             int final_offset=(f->ffb->fcb.size-(BLOCK_SIZE-sizeof(FileControlBlock)))%BLOCK_SIZE;

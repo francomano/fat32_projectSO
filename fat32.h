@@ -1,6 +1,7 @@
 #pragma once
 #include "disk_driver.h"
 #include <stdlib.h>
+#include "linked_list.h"
 
 /*these are structures stored on disk*/
 
@@ -58,6 +59,7 @@ typedef struct {
 
 // this is a file handle, used to refer to open files
 typedef struct {
+  ListItem item;
   fat32* f;                   // pointer to memory file system structure
   FirstFileBlock* ffb;             // pointer to the first block of the file(read it)
   FirstDirectoryBlock* directory  ;  // pointer to the directory where the file is stored

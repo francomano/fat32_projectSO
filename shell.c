@@ -7,11 +7,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>  
+#include "linked_list.h"
 
 #define NUMBLOCKS 100
 #define NUMCMD 13
-#define LENCMD 20
+#define LENCMD 128
 #define LENPATH 128
+#define LINE 1024
 
 
 char* cmd[NUMCMD]= {
@@ -62,24 +64,25 @@ int main(int argc, char** argv) {
     strcpy(path,root->dcb->fcb.name);
 
 
+    ListHead* head=(ListHead*)malloc(sizeof(ListHead));
+    List_init(head);
+    FileHandle* fh;
 
+    char user_cmd[LENCMD];
     while(1) {
         printf("%s : ",path);
-        char user_cmd[LENCMD];
-       
-        fgets(user_cmd, LENCMD, stdin);
         fflush(stdin);
+        fgets(user_cmd, LENCMD, stdin);
+        
         //remove new line
         if ((strlen(user_cmd) > 0) && (user_cmd[strlen (user_cmd) - 1] == '\n'))
-        user_cmd[strlen (user_cmd) - 1] = '\0';
-
+            user_cmd[strlen (user_cmd) - 1] = '\0';
         char* CMD;
         char* ARG;
 
         CMD=strtok(user_cmd," ");
         ARG=strtok(NULL," ");
    
-        
         if(CMD){
             if(!strcmp(CMD,"exit"))
             {
@@ -104,7 +107,8 @@ int main(int argc, char** argv) {
                     int newlen=len1-len2;
                     char* s=(char*)malloc(LENPATH);
                     char*temp=path;
-                    strncpy(s,path,newlen);                        path=s;
+                    strncpy(s,path,newlen);                        
+                    path=s;
                     free(temp);
                     ret=fat32_changeDir(root,ARG);
                     if(ret) {
@@ -135,10 +139,78 @@ int main(int argc, char** argv) {
             }
             else if (!strcmp(CMD,"createFile"))
             {
-            fat32_createFile(root,ARG);
+                fh=fat32_createFile(root,ARG);
+                if(fh) {
+                    List_insert(head,NULL,(ListItem*)fh);
+                    List_print(head);
+                }
             }
-        
+            else if(!strcmp(CMD,"openFile")) {
+                fh=fat32_openFile(root,ARG);
+                if(fh) {
+                    List_insert(head,NULL,(ListItem*)fh);
+                    List_print(head);
+                }
+            }
 
+            else if(!strcmp(CMD,"write")) {
+                if(!ARG) {
+                    printf("usage: write <nomefile>\n");
+                    continue;
+                }
+                if((fh = (FileHandle*)List_find(head,ARG))==NULL) {
+                    printf("File handle at :%p\n",fh);
+                    printf("File non aperto o non creato\n");
+                    continue;
+                }
+                printf("Inserire il text (0<=t<=%d)\n",LINE);
+                char buff[LINE];
+                fflush(stdin);
+                fgets(buff,LINE,stdin);
+                ret=fat32_write(fh,buff,strlen(buff));
+                if(ret!=strlen(buff)) {
+                    printf("Scrittura parziale del messaggio\n");
+                }
+                else printf("WRITE SUCCESS bytes_written: %d\n",ret);
+            }
+            else if(!strcmp(CMD,"seek")) {
+                if(!ARG) {
+                    printf("usage: seek <nomefile>\n");
+                    continue;
+                } 
+                if((fh = (FileHandle*)List_find(head,ARG))==NULL) {
+                    printf("File handle at :%p\n",fh);
+                    printf("File non aperto o non creato\n");
+                    continue;
+                }
+                printf("Inserire la posizione (0<=p<=%d)\n",fh->ffb->fcb.size);
+                char p[LINE];
+                fflush(stdin);
+                fgets(p,LINE,stdin);
+                int pos=atoi(p);
+                ret=fat32_seek(fh,pos);
+            } 
+            else if(!strcmp(CMD,"read")) {
+                if(!ARG) {
+                    printf("usage: read <nomefile>\n");
+                    continue;
+                } 
+                if((fh = (FileHandle*)List_find(head,ARG))==NULL) {
+                    printf("File handle at :%p\n",fh);
+                    printf("File non aperto o non creato\n");
+                    continue;
+                }
+                printf("Inserire i bytes da leggere (0<=b<=%d)\n",fh->ffb->fcb.size);
+                char p[LINE];
+                fflush(stdin);
+                fgets(p,LINE,stdin);
+                int size=atoi(p);
+                printf("size:%d\n",size);
+                char buff[size];
+                ret=fat32_read(fh,buff,size);
+                printf("%s\n",buff);
+                printf("bytes_read: %d\n",ret);
+            }
             
         }     
     }

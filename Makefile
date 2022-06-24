@@ -7,10 +7,12 @@ AR=ar
 BINS= shell
 
 OBJS=disk_driver.o\
+	 linked_list.o\
 	 fat32.o
 #add here your object files
 
 HEADERS=disk_driver.h\
+		linked_list.h\
 	    fat32.h
 
 %.o:	%.c $(HEADERS)
