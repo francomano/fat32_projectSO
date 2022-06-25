@@ -22,18 +22,20 @@ ListItem* List_find(ListHead* head, char* filename){
 }
 
 ListItem* List_insert(ListHead* head, ListItem* prev, ListItem* item) {
-  if (item->next || item->prev)
+  if (item->next || item->prev){
+    printf("qua problema\n");
     return 0;
+  }
   
 #ifdef _LIST_DEBUG_
   // we check that the element is not in the list
-  ListItem* instance=List_find(head, item);
+  ListItem* instance=List_find(head, ((FileHandle*)item)->ffb->fcb.name);
   assert(!instance);
 
   // we check that the previous is inthe list
 
   if (prev) {
-    ListItem* prev_instance=List_find(head, prev);
+    ListItem* prev_instance=List_find(head, ((FileHandle*)prev)->ffb->fcb.name);
     assert(prev_instance);
   }
   // we check that the previous is inthe list
@@ -48,11 +50,17 @@ ListItem* List_insert(ListHead* head, ListItem* prev, ListItem* item) {
     item->next=next;
     next->prev=item;
   }
+
   if (!prev)
     head->first=item;
+  
   if(!next)
     head->last=item;
+ 
   ++head->size;
+
+
+
   return item;
 }
 
@@ -60,7 +68,7 @@ ListItem* List_detach(ListHead* head, ListItem* item) {
 
 #ifdef _LIST_DEBUG_
   // we check that the element is in the list
-  ListItem* instance=List_find(head, item);
+  ListItem* instance=List_find(head,((FileHandle*)item)->ffb->fcb.name);
   assert(instance);
 #endif
 

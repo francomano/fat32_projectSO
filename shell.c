@@ -149,6 +149,7 @@ int main(int argc, char** argv) {
                 fh=fat32_openFile(root,ARG);
                 if(fh) {
                     List_insert(head,NULL,(ListItem*)fh);
+                    
                     List_print(head);
                 }
             }
@@ -167,6 +168,8 @@ int main(int argc, char** argv) {
                 char buff[LINE];
                 fflush(stdin);
                 fgets(buff,LINE,stdin);
+              
+                buff[strlen (buff) - 1] = '\0';
                 ret=fat32_write(fh,buff,strlen(buff));
                 if(ret!=strlen(buff)) {
                     printf("Scrittura parziale del messaggio\n");
@@ -205,11 +208,20 @@ int main(int argc, char** argv) {
                 fflush(stdin);
                 fgets(p,LINE,stdin);
                 int size=atoi(p);
-                printf("size:%d\n",size);
                 char buff[size];
                 ret=fat32_read(fh,buff,size);
-                printf("%s\n",buff);
+                for(int i=0;i<size;i++){
+                    printf("%c",buff[i]);
+                }
+                printf("\n");
                 printf("bytes_read: %d\n",ret);
+            }
+            else if(!strcmp(CMD,"rm")) {
+                while((fh = (FileHandle*)List_find(head,ARG))!=0){
+                    List_detach(head,(ListItem*)fh);
+                    fat32_close(fh);
+                }
+                ret=fat32_remove(fs,ARG);
             }
             
         }     

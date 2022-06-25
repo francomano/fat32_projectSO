@@ -139,6 +139,8 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
     d->dcb->num_entries++;
     DiskDriver_writeBlock(d->f->disk, d->dcb, d->dcb->fcb.block_in_disk);
     
+    ((ListItem*)fh)->next=0;
+    ((ListItem*)fh)->prev=0;
     return fh;
         
 }
@@ -208,6 +210,8 @@ FileHandle* fat32_openFile(DirectoryHandle* d, const char* filename) {
             fh->ffb=fdb;
             fh->pos_in_file=0;
             filename_dealloc(names);
+            ((ListItem*)fh)->next=0;
+            ((ListItem*)fh)->prev=0;
             return fh;
         }
         i++;
@@ -800,19 +804,45 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
 
 
 }
+int freeFile(fat32*f,int index){
+    if(f->disk->fat[index]==index){
+        return DiskDriver_freeBlock(f->disk,index);
+    }
+    int new_index=f->disk->fat[index];
+    freeFile(f,new_index);
+    return DiskDriver_freeBlock(f->disk,index);
+ 
+}
 
 // removes the file in the current directory
 // returns -1 on failure 0 on success
 // if a directory, it removes recursively all contained files
 int fat32_remove(fat32* fs, char* filename) {
-    //cerco il filename in cwd
-    /*int entries=fs->cwd->num_entries;
+ if(filename==NULL) return 0;
+    char** names=filename_alloc();
+    DirectoryHandle* d=(DirectoryHandle*)malloc(sizeof(DirectoryHandle));
+    d->dcb=fs->cwd;
+    d->f=fs;
+    fat32_listDir(names,d);
+    int entries=fs->cwd->num_entries;
     int i=0;
-    FileControlBlock* fcb=(FileControlBlock*)malloc(sizeof(FileControlBlock));
-    while(fs->cwd->file_blocks[i]!=-1) {
-        DiskDriver_readBlock(fs->disk,fcb,fs->cwd->fcb.block_in_disk);
-        if(!strcmp(fs->c))
-    }*/
+    while(entries>0){
+        if(!(strcmp(names[i],filename))) {
+            int index=d->dcb->file_blocks[i];
+            printf("primo blocco %d\n",index);
+            int ret=freeFile(fs,index);
+            fs->cwd->file_blocks[i]=-1;
+            fs->cwd->num_entries--;
+            DiskDriver_writeBlock(fs->disk,fs->cwd,fs->cwd->fcb.block_in_disk);
+            filename_dealloc(names);
+            printf("ho eliminato %d\n",ret);
+            return ret;
+        }
+        i++;
+        entries--;
+    }
+    filename_dealloc(names);
+    printf("File %s non presente nella cwd\n",filename);
     return -1;
 }
 
