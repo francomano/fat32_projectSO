@@ -7,7 +7,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 
 # This program built for i386-apple-darwin11.3.0
 
-# Make data base, printed on Sat Jun 25 17:49:54 2022
+# Make data base, printed on Sat Jun 25 21:49:44 2022
 
 # Variables
 
@@ -38,7 +38,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/v8/mhxj6bfs2l3cpn1s0yq2lcl80000gn/T/vscode-ipc-fa1c65fc-07f4-49ab-a029-4dbc94719b6a.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/v8/mhxj6bfs2l3cpn1s0yq2lcl80000gn/T/vscode-ipc-270ccb30-1d5a-4d9a-b6d1-68a4ddfaab3f.sock
 # environment
 VSCODE_CWD = /
 # environment
@@ -52,7 +52,7 @@ ELECTRON_RUN_AS_NODE = 1
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.dBLggriCnb/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.cG7PruP3zJ/Listeners
 # automatic
 %F = $(notdir $%)
 # environment
@@ -148,9 +148,9 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 82588
+VSCODE_PID = 615
 # variable set hash-table stats:
-# Load=69/1024=7%, Rehash=0, Collisions=9/96=9%
+# Load=69/1024=7%, Rehash=0, Collisions=9/100=9%
 
 # Pattern-specific Variable Values
 
@@ -158,9 +158,9 @@ VSCODE_PID = 82588
 
 # Directories
 
-# . (device 16777221, inode 12915967897): 21 files, no impossibilities.
+# . (device 16777221, inode 12915967897): 20 files, no impossibilities.
 
-# 21 files, no impossibilities in 1 directories.
+# 20 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -178,9 +178,9 @@ all: shell
 #  Implicit rule search has been done.
 #  File does not exist.
 #  File has been updated.
-#  Successfully updated.
+#  Needs to be updated (-q is set).
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
 
 # Not a target:
 linked_list.h:
@@ -205,7 +205,7 @@ linked_list.h:
 # Not a target:
 fat32.c:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-25 17:49:09
+#  Last modified 2022-06-25 21:49:44
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -232,7 +232,7 @@ fat32.h:
 disk_driver.o: disk_driver.c disk_driver.h linked_list.h fat32.h
 #  Implicit rule search has been done.
 #  Implicit/static pattern stem: `disk_driver'
-#  Last modified 2022-06-25 17:23:27
+#  Last modified 2022-06-25 21:31:25
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -244,7 +244,7 @@ disk_driver.o: disk_driver.c disk_driver.h linked_list.h fat32.h
 # Not a target:
 shell.c:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-25 17:34:17
+#  Last modified 2022-06-25 20:54:34
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -279,7 +279,7 @@ clean:
 # Not a target:
 disk_driver.c:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-25 17:20:03
+#  Last modified 2022-06-25 21:31:15
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -287,11 +287,11 @@ disk_driver.c:
 
 shell: shell.c disk_driver.o linked_list.o fat32.o
 #  Implicit rule search has not been done.
-#  Last modified 2022-06-25 17:49:15
+#  Last modified 2022-06-25 21:42:15
 #  File has been updated.
-#  Successfully updated.
+#  Needs to be updated (-q is set).
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
 #  commands to execute (from `Makefile', line 27):
 	$(CC) $(CCOPTS)  -o $@ $^ $(LIBS)
 	
@@ -299,11 +299,28 @@ shell: shell.c disk_driver.o linked_list.o fat32.o
 fat32.o: fat32.c disk_driver.h linked_list.h fat32.h
 #  Implicit rule search has been done.
 #  Implicit/static pattern stem: `fat32'
-#  Last modified 2022-06-25 17:49:15
+#  Last modified 2022-06-25 21:42:15
 #  File has been updated.
-#  Successfully updated.
+#  Needs to be updated (-q is set).
+# automatic
+# @ := fat32.o
+# automatic
+# % := 
+# automatic
+# * := fat32
+# automatic
+# + := fat32.c disk_driver.h linked_list.h fat32.h
+# automatic
+# | := 
+# automatic
+# < := fat32.c
+# automatic
+# ^ := fat32.c disk_driver.h linked_list.h fat32.h
+# automatic
+# ? := fat32.c
+ 
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+# Load=8/32=25%, Rehash=0, Collisions=1/14=7%
 #  commands to execute (from `Makefile', line 19):
 	$(CC) $(CCOPTS) -c -o $@  $<
 	
@@ -313,7 +330,6 @@ disk_driver.h:
 #  Implicit rule search has been done.
 #  Last modified 2022-05-18 22:07:31
 #  File has been updated.
- 
 #  Successfully updated.
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
@@ -340,6 +356,6 @@ linked_list.c:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Sat Jun 25 17:49:54 2022
+# Finished Make data base on Sat Jun 25 21:49:44 2022
 
  

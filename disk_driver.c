@@ -96,13 +96,13 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 //marco
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
    //SI ASSUME CHE SI SCRIVE SU NUOVI BLOCCHI SOLO DOPO AVER CHIAMATO GETFREEBLOCK
-   if(block_num==disk->header->first_free_block){ //ATOMIC se scrivo nel first free block cerco il prossimo e sovrascrivo
-      disk->header->first_free_block=DiskDriver_getFreeBlock(disk,disk->header->first_free_block);
-      disk->header->free_blocks--;
+   if(block_num==disk->header->first_free_block){ //se scrivo nel first free block cerco il prossimo e sovrascrivo
+      disk->header->first_free_block=DiskDriver_getFreeBlock(disk,disk->header->first_free_block+1);
+      printf("first free %d\n",disk->header->first_free_block);
    }
    int fd=disk->fd;
    int ret=lseek(fd,sysconf(_SC_PAGE_SIZE)+disk->header->num_blocks*sizeof(int)+BLOCK_SIZE*block_num,SEEK_SET);
-   //printf("ret seek = %d\n",ret);
+   printf("ret seek = %d\n",ret);
    if(ret<0){
       perror("seek");
       return -1;
@@ -112,7 +112,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
       perror("write block error");
       return -1;
    }
- 
+   disk->header->free_blocks--;
    return ret;
 
    
@@ -134,7 +134,10 @@ int DiskDriver_freeBlock(DiskDriver* disk, int block_num) {
       fprintf(stderr,"Error seeking block %d",block_num);
       return -1;
    }
-   int zero_block[BLOCK_SIZE] = {0};
+   //int zero_block[BLOCK_SIZE] = {0};
+   int* zero_block=(int*)malloc(sizeof(int)*BLOCK_SIZE);
+   memset(zero_block,0,BLOCK_SIZE);
+   printf("sto per scrivere in %d %d\n",block_num,ret);
    ret = write(fd,zero_block,BLOCK_SIZE);
    if(ret<0) {
       fprintf(stderr,"Error freeing block %d",block_num);
@@ -157,15 +160,40 @@ int DiskDriver_getFreeBlock(DiskDriver* disk, int start){
       fprintf(stderr,"Start index %d out of range (0<=block<=%d)",start,n_blocks);
       return -1;
    }
-   //if(disk->header->first_free_block>start) return disk->header->first_free_block;
+   
    for(int i=start;i<n_blocks;i++) {
       if(disk->fat[i]==-1) {
-         disk->header->first_free_block = i;
+         disk->header->free_blocks--;
+         printf("free restituito %d\n",i);
          return i;
       }
    }
+   disk->header->free_blocks--;
    return disk->header->first_free_block;
 }
 
 // writes the data (flushing the mmaps)
-int DiskDriver_flush(DiskDriver* disk);
+int DiskDriver_flush(DiskDriver* disk){
+   int ret = lseek(disk->fd,0,SEEK_SET);
+   if(ret<0) {
+      fprintf(stderr,"Error seeking block %d",0);
+      return -1;
+   }
+   ret = write(disk->fd,disk->header,sizeof(DiskHeader));
+   if(ret<0) {
+      fprintf(stderr,"Error writing the header");
+      return -1;
+   }
+   ret=lseek(disk->fd,sysconf(_SC_PAGE_SIZE),SEEK_SET);
+   if(ret<0) {
+      fprintf(stderr,"Error seeking block");
+      return -1;
+   }
+   ret = write(disk->fd,disk->fat,sizeof(int)*disk->header->num_blocks);
+   if(ret<0) {
+      fprintf(stderr,"Error writing the fat");
+      return -1;
+   }
+   return 0;
+
+}

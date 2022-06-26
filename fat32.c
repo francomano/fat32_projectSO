@@ -31,7 +31,6 @@ DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk){
     root->pos_in_block=0;
     fs->cwd=fdb;
     fs->disk->fat[0]=0;
-
     return root;
 }
 
@@ -50,22 +49,27 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
     if(d==NULL || filename==NULL){
         return 0;
     }
-    int block_index=DiskDriver_getFreeBlock(d->f->disk,d->f->cwd->fcb.block_in_disk);
-    //printf("scriverò il blocco di questo nuovo file in pos %d\n",block_index);
+    int block_index=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
+    printf("scriverò il blocco di questo nuovo file in pos %d\n",block_index);
     if(block_index==-1){
         return 0;
     }
-    int entries=d->dcb->num_entries-1;
+    int entries=d->dcb->num_entries;
+    int i=0;
     FirstFileBlock* aux=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
     while(entries>0) {
-        int index=d->dcb->file_blocks[entries];
-        DiskDriver_readBlock(d->f->disk,aux,index);
-        if(!strcmp(aux->fcb.name,filename)) {
-            free(aux);
-            printf("File gia esistente\n");
-            return 0;
+        int index=d->dcb->file_blocks[i];
+        if(index!=-1){
+            DiskDriver_readBlock(d->f->disk,aux,index);
+            if(!strcmp(aux->fcb.name,filename)) {
+                free(aux);
+                printf("File gia esistente\n");
+                return 0;
+
+            }
         }
         entries--;
+        i++;
     }
     free(aux);
     FileHandle* fh=(FileHandle*)malloc(sizeof(FileHandle));//inizializzo il file_handle
@@ -97,41 +101,41 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
         int* fat=d->f->disk->fat;
         int first_succ_index=fat[d->dcb->fcb.block_in_disk];
         //int numero_blocchi_successori=(d->dcb->num_entries-first_size)/(BLOCK_SIZE/(sizeof(int)));
-        if(first_succ_index!=fat[d->dcb->fcb.block_in_disk] && first_succ_index!=-1){
-            while(first_succ_index!=fat[d->dcb->fcb.block_in_disk] && first_succ_index!=-1){
+        if(first_succ_index!=fat[d->dcb->fcb.block_in_disk] && first_succ_index!=-1){ //ho successori
+            while(first_succ_index!=fat[first_succ_index] && first_succ_index!=-1){ //scorro i successori
                 first_succ_index=fat[first_succ_index];
             }
             DirectoryBlock* dirBlock=(DirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
-            int r=DiskDriver_readBlock(d->f->disk,dirBlock,first_succ_index);
-            if(r==-1){
-                return 0;
-            }
+            DiskDriver_readBlock(d->f->disk,dirBlock,first_succ_index);
+           
             int flag=1; //se ho spazio nel blocco successore
             for(int z=0;z<BLOCK_SIZE/sizeof(int);z++){
-                if(dirBlock->file_blocks[z]!=-1){
+                if(dirBlock->file_blocks[z]==-1){
                     dirBlock->file_blocks[z]=block_index;
                     flag=0;
+                    DiskDriver_writeBlock(d->f->disk, dirBlock, first_succ_index);
                     break;
                 }
             }
-            if(flag){
+            if(flag){ //erano tutti occupati
                 //DirectoryBlock* dirBlock=(DirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
                 int index=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
                 if(index==-1)
                     return 0;
-                DiskDriver_writeBlock(d->f->disk, dirBlock, index);
+
                 d->f->disk->fat[first_succ_index]=index; //successore del successore
                 dirBlock->file_blocks[0]=block_index;
+                DiskDriver_writeBlock(d->f->disk, dirBlock, index);
             }
         }
         else{
             DirectoryBlock* dirBlock=(DirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
+            DiskDriver_readBlock(d->f->disk,dirBlock,first_succ_index);
             int idx=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
-            if(idx==-1)
-                    return 0;
-            DiskDriver_writeBlock(d->f->disk, dirBlock, idx);
+            if(idx==-1) return 0;
             d->f->disk->fat[d->dcb->fcb.block_in_disk]=idx;
             dirBlock->file_blocks[0]=block_index;
+            DiskDriver_writeBlock(d->f->disk, dirBlock, idx);
 
             }
         }
@@ -151,24 +155,38 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
 int fat32_listDir(char** names, DirectoryHandle* d){
     int i=0;
     int entries=d->dcb->num_entries;
+    int entries_of_first_block=(BLOCK_SIZE
+		   -sizeof(FileControlBlock)
+		    -sizeof(int))/sizeof(int);
+    int entries_of_others=BLOCK_SIZE/sizeof(int);
+    int valid_entries=0;
     FirstDirectoryBlock* buf=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
-    while(d->dcb->file_blocks[i]!=-1){
-        DiskDriver_readBlock(d->f->disk,buf,d->dcb->file_blocks[i]);
-        strcpy(names[i],buf->fcb.name);
-        entries--;
+    while(entries_of_first_block){
+        if(d->dcb->file_blocks[i]!=-1){
+            DiskDriver_readBlock(d->f->disk,buf,d->dcb->file_blocks[i]);
+            strcpy(names[valid_entries],buf->fcb.name);
+            valid_entries++;
+        }
+        entries_of_first_block--;
         i++;
+        
     }
-    while(entries){
+    entries-=valid_entries;
+    while(entries){ //finchè ce ne sono ancora negli altri blocchi
         int*fat=d->f->disk->fat;
         int succ=fat[d->dcb->fcb.block_in_disk];
         DirectoryBlock* buf3=(DirectoryBlock*)malloc(sizeof(DirectoryBlock));
         DiskDriver_readBlock(d->f->disk,buf3,succ);
         i=0;
         FirstDirectoryBlock* buf2=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
-        while(buf3->file_blocks[i]!=-1){
-            DiskDriver_readBlock(d->f->disk,buf2,buf3->file_blocks[i]);
-            strcpy(names[i],buf2->fcb.name);
-            entries--;
+        while(entries_of_others){
+            if(buf3->file_blocks[i]!=-1){
+                DiskDriver_readBlock(d->f->disk,buf2,buf3->file_blocks[i]);
+                strcpy(names[valid_entries],buf2->fcb.name);
+                valid_entries++;
+                entries--;
+            }
+            entries_of_others--;
             i++;
         }
         succ=fat[succ];
@@ -229,7 +247,7 @@ int fat32_close(FileHandle* f) {
         printf("FileHandle inesistente");
         return -1;
     }
-    free(f->directory);
+    //free(f->directory);
     free(f->ffb);
     free(f);
     return 0;
@@ -714,7 +732,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     if(d==NULL || dirname==NULL){
         return -1;
     }
-    int block_index=DiskDriver_getFreeBlock(d->f->disk,d->f->cwd->fcb.block_in_disk);
+    int block_index=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
 
     //printf("scriverò il blocco di questa nuova cartella in pos %d\n",block_index);
     if(block_index==-1){
@@ -797,19 +815,19 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
 
     d->dcb->num_entries++;
     DiskDriver_writeBlock(d->f->disk, d->dcb, d->dcb->fcb.block_in_disk);
-
-
-
+   
     return 0;
 
 
 }
 int freeFile(fat32*f,int index){
     if(f->disk->fat[index]==index){
+        printf("ho eliminato %d blocco\n",index);
         return DiskDriver_freeBlock(f->disk,index);
     }
     int new_index=f->disk->fat[index];
     freeFile(f,new_index);
+    printf("ho eliminato %d blocco\n",index);
     return DiskDriver_freeBlock(f->disk,index);
  
 }
@@ -817,25 +835,21 @@ int freeFile(fat32*f,int index){
 // removes the file in the current directory
 // returns -1 on failure 0 on success
 // if a directory, it removes recursively all contained files
-int fat32_remove(fat32* fs, char* filename) {
+int fat32_remove(DirectoryHandle* d, char* filename) {
  if(filename==NULL) return 0;
     char** names=filename_alloc();
-    DirectoryHandle* d=(DirectoryHandle*)malloc(sizeof(DirectoryHandle));
-    d->dcb=fs->cwd;
-    d->f=fs;
     fat32_listDir(names,d);
-    int entries=fs->cwd->num_entries;
+    int entries=d->dcb->num_entries;
     int i=0;
     while(entries>0){
         if(!(strcmp(names[i],filename))) {
             int index=d->dcb->file_blocks[i];
-            printf("primo blocco %d\n",index);
-            int ret=freeFile(fs,index);
-            fs->cwd->file_blocks[i]=-1;
-            fs->cwd->num_entries--;
-            DiskDriver_writeBlock(fs->disk,fs->cwd,fs->cwd->fcb.block_in_disk);
+            int ret=freeFile(d->f,index);
+            d->dcb->file_blocks[i]=-1;
+            d->dcb->num_entries--;
+            DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
             filename_dealloc(names);
-            printf("ho eliminato %d\n",ret);
+            printf("ho adesso %d entries \n",d->dcb->num_entries);
             return ret;
         }
         i++;

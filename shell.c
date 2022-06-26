@@ -35,21 +35,29 @@ int main(int argc, char** argv) {
     }
     int ret;
     //READ THE DISK
+    
     char filename[64];
     strcpy(filename,argv[1]);
     DiskDriver* disk=(DiskDriver*)malloc(sizeof(DiskDriver));
     fat32* fs=(fat32*)malloc(sizeof(fat32));
-    DirectoryHandle* root= (DirectoryHandle*)malloc(sizeof(DirectoryHandle));
-    disk->fd=open (filename,O_RDWR | O_SYNC,0666);
-    disk->header=mmap (0, sizeof(DiskHeader), PROT_READ | PROT_WRITE, MAP_SHARED, disk->fd, 0);
-    disk->fat =mmap(0,100*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,sysconf(_SC_PAGE_SIZE));
-    fs->disk=disk;
-    fs->cwd=(FirstDirectoryBlock*)malloc(BLOCK_SIZE);
-    ret=DiskDriver_readBlock(disk,fs->cwd,0);
-    assert(ret && "Errore lettura disco");
-    root->directory=NULL;
-    root->dcb=fs->cwd;
-    root->f=fs;
+    DirectoryHandle* root;
+    if((ret=open(filename,O_RDWR | O_SYNC,0666))==-1){
+        DiskDriver_init(disk,filename,NUMBLOCKS);
+        root=fat32_init(fs,disk);
+    }
+    else{
+        root= (DirectoryHandle*)malloc(sizeof(DirectoryHandle));
+        disk->fd=ret;
+        disk->header=mmap (0, sizeof(DiskHeader), PROT_READ | PROT_WRITE, MAP_SHARED, disk->fd, 0);
+        disk->fat =mmap(0,100*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,sysconf(_SC_PAGE_SIZE));
+        fs->disk=disk;
+        fs->cwd=(FirstDirectoryBlock*)malloc(BLOCK_SIZE);
+        ret=DiskDriver_readBlock(disk,fs->cwd,0);
+        assert(ret && "Errore lettura disco");
+        root->directory=NULL;
+        root->dcb=fs->cwd;
+        root->f=fs;
+    }
     /**********************************************************************/
 
 
@@ -70,6 +78,7 @@ int main(int argc, char** argv) {
 
     char user_cmd[LENCMD];
     while(1) {
+        //printf("i'm in %s\n",fs->cwd->fcb.name);
         printf("%s : ",path);
         fflush(stdin);
         fgets(user_cmd, LENCMD, stdin);
@@ -88,14 +97,20 @@ int main(int argc, char** argv) {
             {
                 break;
             }
+            else if(!strcmp(CMD,"init"))
+            {
+                root=fat32_init(fs,disk);
+            }
             else if (!strcmp(CMD,"ls"))
             {
-                char** names=filename_alloc();
-                fat32_listDir(names,root);
-                for(int i=0;i<root->dcb->num_entries;i++){
-                    printf("%s\n",names[i]);
+                if(root->dcb->num_entries>0){
+                    char** names=filename_alloc();
+                    fat32_listDir(names,root);
+                    for(int i=0;i<root->dcb->num_entries;i++){
+                        printf("%s\n",names[i]);
+                    }
+                    filename_dealloc(names);
                 }
-                filename_dealloc(names);
             }
             else if (!strcmp(CMD,"cd"))
             {
@@ -152,6 +167,12 @@ int main(int argc, char** argv) {
                     
                     List_print(head);
                 }
+            }
+            else if(!strcmp(CMD,"close")) {
+                ListItem* item=List_find(head,ARG);
+                List_detach(head,item);
+                List_print(head);
+                fat32_close((FileHandle*)item);
             }
 
             else if(!strcmp(CMD,"write")) {
@@ -216,12 +237,12 @@ int main(int argc, char** argv) {
                 printf("\n");
                 printf("bytes_read: %d\n",ret);
             }
-            else if(!strcmp(CMD,"rm")) {
+            else if(!strcmp(CMD,"rm")) { //PER ORA FUNZIONA SE SI RIMUOVONO A PARTIRE DALL'ULTIMO CREATO ANDANDO INDIETRO
                 while((fh = (FileHandle*)List_find(head,ARG))!=0){
                     List_detach(head,(ListItem*)fh);
                     fat32_close(fh);
                 }
-                ret=fat32_remove(fs,ARG);
+                ret=fat32_remove(root,ARG);
             }
             
         }     
