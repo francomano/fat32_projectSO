@@ -224,16 +224,15 @@ int main(int argc, char** argv) {
                     printf("File non aperto o non creato\n");
                     continue;
                 }
-                printf("Inserire i bytes da leggere (0<=b<=%d)\n",fh->ffb->fcb.size);
+                printf("Inserire i bytes da leggere (0<=b<=%d):",fh->ffb->fcb.size);
                 char p[LINE];
                 fflush(stdin);
                 fgets(p,LINE,stdin);
                 int size=atoi(p);
                 char buff[size];
                 ret=fat32_read(fh,buff,size);
-                for(int i=0;i<size;i++){
-                    printf("%c",buff[i]);
-                }
+                buff[ret]='\0';
+                printf("%s",buff);
                 printf("\n");
                 printf("bytes_read: %d\n",ret);
             }
@@ -245,7 +244,8 @@ int main(int argc, char** argv) {
                 ret=fat32_remove(root,ARG);
             }
             
-        }     
+        }
+        //List_print(head);     
     }
 
 

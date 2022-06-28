@@ -273,7 +273,6 @@ int fat32_write(FileHandle* f, void* data, int size){
             FirstFileBlock* first=f->ffb;
             memcpy(first->data+f->pos_in_file,data,size);
             DiskDriver_writeBlock(f->f->disk,first,f->ffb->fcb.block_in_disk);
-            free(first);
             bytes_written+=size;
         }
         else{ //scrivo un po' nel primo ed il resto nei successori
@@ -477,7 +476,7 @@ int fat32_write(FileHandle* f, void* data, int size){
     fakedir->directory=NULL;
     fakedir->f=f->f;
     
-    if(strcmp(f->f->cwd->fcb.name,"/\0")){
+    if(strcmp(f->f->cwd->fcb.name,"/")){
         fakedir->directory=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
         DiskDriver_readBlock(f->f->disk,fakedir->directory,f->f->cwd->fcb.directory_block);
     }
@@ -489,11 +488,12 @@ int fat32_write(FileHandle* f, void* data, int size){
 // reads in the file, at current position size bytes stored in data
 // returns the number of bytes read
 int fat32_read(FileHandle* f, void* data, int size) {
+    size=(size<=f->ffb->fcb.size)? size : f->ffb->fcb.size;
     int bytes_read=0;
     int* fat=f->f->disk->fat;
     int bytes_left_within_block;
     if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)) { //siamo col cursore nel primo
-        if(f->pos_in_file+size<BLOCK_SIZE-sizeof(FileControlBlock)) {
+        if(f->pos_in_file+size<=BLOCK_SIZE-sizeof(FileControlBlock)) {
             if(size+f->pos_in_file<=f->ffb->fcb.size) {
                 memcpy(data,f->ffb->data+f->pos_in_file,size);
                 bytes_read+=size;
@@ -507,6 +507,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
         else {
             int pos_offset=f->pos_in_file;
             int final_offset=(f->ffb->fcb.size-(BLOCK_SIZE-sizeof(FileControlBlock)))%BLOCK_SIZE;
+            printf("final_offset: %d\n",final_offset);
             int first_succ=fat[f->ffb->fcb.block_in_disk];
             int num_fileblocks=ceil((double)((size-(BLOCK_SIZE-sizeof(FileControlBlock))))/BLOCK_SIZE);
             printf("num_fileblocks %d\n",num_fileblocks);
@@ -515,7 +516,6 @@ int fat32_read(FileHandle* f, void* data, int size) {
                 bytes_read+=final_offset-pos_offset;
             }
             else{ //leggiamo il resto del primo e andiamo a leggere i successori
-                
     
                 bytes_left_within_block = BLOCK_SIZE-sizeof(FileControlBlock)-f->pos_in_file;
                 //leggo i rimanenti bytes del ffb
@@ -546,7 +546,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
                 else if(first_succ==fat[first_succ] && size-bytes_read>final_offset){ //arriviamo a EOF
                     memcpy(data+bytes_read,buff,final_offset); //leggo tutto ciò che posso
                     bytes_read+=final_offset;
-                    printf(("lettura oltre EOF\n"));
+                    printf("lettura oltre EOF\n");
                 }
                 else{
                     memcpy(data+bytes_read,buff,size-bytes_read);
@@ -612,7 +612,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
                 else if(first_succ==fat[first_succ] && size-bytes_read>final_offset){ //arriviamo a EOF
                     memcpy(data+bytes_read,buff,final_offset); //leggo tutto ciò che posso
                     bytes_read+=final_offset;
-                    printf(("lettura oltre EOF\n"));
+                    printf("lettura oltre EOF\n");
                 }
                 else{
                     memcpy(data+bytes_read,buff,size-bytes_read);
@@ -627,10 +627,10 @@ int fat32_read(FileHandle* f, void* data, int size) {
     f->pos_in_file+=bytes_read;
     return bytes_read;
 }
-//recursively update size of directories when a write operation is performed
+//recursively updates size of directories when a write operation is performed
 //edoardo
 int fat32_update_size(DirectoryHandle* d,int num) {
-    if(!(strcmp(d->dcb->fcb.name,"/\0"))) {
+    if(!(strcmp(d->dcb->fcb.name,"/"))) {
         //printf("aggiorno di %d\n",num);
         //printf("prima è %d\n",d->dcb->fcb.size);
         d->dcb->fcb.size+=num;
