@@ -76,9 +76,9 @@ int main(int argc, char** argv) {
     List_init(head);
     FileHandle* fh;
 
-    char user_cmd[LENCMD];
+    char user_cmd[LENCMD]={0};
     while(1) {
-        //printf("i'm in %s\n",fs->cwd->fcb.name);
+        printf("i'm in %s\n",fs->cwd->fcb.name);
         printf("%s : ",path);
         fflush(stdin);
         fgets(user_cmd, LENCMD, stdin);
@@ -91,6 +91,7 @@ int main(int argc, char** argv) {
 
         CMD=strtok(user_cmd," ");
         ARG=strtok(NULL," ");
+        printf("%c\n",ARG[strlen(ARG)]);
    
         if(CMD){
             if(!strcmp(CMD,"exit"))
@@ -116,18 +117,18 @@ int main(int argc, char** argv) {
             {
                 
             
-                if(!strcmp(ARG,"..") && strcmp(root->dcb->fcb.name,"/")){
-                    int len2=strlen(root->f->cwd->fcb.name)+1;
+                if(!strcmp(ARG,"..") && strcmp(root->dcb->fcb.name,"/\0")){
+                    int len2=strlen(root->dcb->fcb.name)+1;
                     printf("current_len %d\n",len2);
                     int len1=strlen(path);
                     int newlen=len1-len2;
                     printf("newlen %d\n",newlen);
-                    char* s=(char*)malloc(LENPATH);
+                    char* s=(char*)calloc(1,LENPATH);
                     char*temp=path;
-                    strncpy(s,path,newlen);                        
+                    strncpy(s,path,newlen);   
+                    s[strlen(s)]='\0';                     
                     path=s;
                     printf("len_path %ld\n",strlen(path));
-                    path[strlen(path)]='\0';
                     free(temp);
                     ret=fat32_changeDir(root,ARG);
                     //printf("%s : ",path);
@@ -137,7 +138,7 @@ int main(int argc, char** argv) {
                     
                         
                 }
-                else if(!strcmp(ARG,"..") && !strcmp(root->dcb->fcb.name,"/")){
+                else if(!strcmp(ARG,"..") && !strcmp(root->dcb->fcb.name,"/\0")){
 
                 }
                 else{
@@ -146,8 +147,10 @@ int main(int argc, char** argv) {
                         printf("something went wrong\n");
                     }
                     else{
-                        strcat(path,root->f->cwd->fcb.name);                        
-                        strcat(path,"/");
+                        strcat(path,root->dcb->fcb.name);                        
+                        strcat(path,"/\0");
+                        
+
                     }
                         
                     }

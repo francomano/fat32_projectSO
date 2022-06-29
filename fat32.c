@@ -19,7 +19,7 @@ DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk){
     for(int i=0; i<size;i++){
         fdb->file_blocks[i]=-1;
     }
-    strcpy(fdb->fcb.name,"/");
+    strcpy(fdb->fcb.name,"/\0");
     fdb->fcb.size=0;
     fdb->fcb.is_dir=1;
     DiskDriver_writeBlock(fs->disk, fdb, 0);
