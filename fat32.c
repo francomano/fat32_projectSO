@@ -885,7 +885,7 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
                 d->dcb->num_entries--;
                 DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
                 printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
-                //free(dh);
+                free(dh);
             }
             if(d->dcb->num_entries>0 && filename==NULL) {
                 freeFile(d->f,index);

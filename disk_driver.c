@@ -139,6 +139,7 @@ int DiskDriver_freeBlock(DiskDriver* disk, int block_num) {
    memset(zero_block,0,BLOCK_SIZE);
    printf("sto per scrivere in %d %d\n",block_num,ret);
    ret = write(fd,zero_block,BLOCK_SIZE);
+   free(zero_block);
    if(ret<0) {
       fprintf(stderr,"Error freeing block %d",block_num);
       return -1;
