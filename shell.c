@@ -10,17 +10,17 @@
 #include "linked_list.h"
 
 #define NUMBLOCKS 100
-#define NUMCMD 13
+#define NUMCMD 11
 #define LENCMD 128
 #define LENPATH 128
 #define LINE 1024
 
 
 char* cmd[NUMCMD]= {
-    "init","format","createFile",
-    "ls","openFile","close",
+    "createfile",
+    "ls","open","close",
     "write","read","seek",
-    "cd","mkDir","rm","exit"
+    "cd","mkdir","rm","exit"
 };
 
 
@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
 
     char user_cmd[LENCMD]={0};
     while(1) {
-        printf("i'm in %s\n",fs->cwd->fcb.name);
-        printf("%s : ",path);
+        //printf("i'm in %s\n",fs->cwd->fcb.name);
+        //printf("%s : ",path);
         fflush(stdin);
         fgets(user_cmd, LENCMD, stdin);
         
@@ -119,19 +119,15 @@ int main(int argc, char** argv) {
             
                 if(!strcmp(ARG,"..") && strcmp(root->dcb->fcb.name,"/\0")){
                     int len2=strlen(root->dcb->fcb.name)+1;
-                    printf("current_len %d\n",len2);
                     int len1=strlen(path);
                     int newlen=len1-len2;
-                    printf("newlen %d\n",newlen);
                     char* s=(char*)calloc(1,LENPATH);
                     char*temp=path;
                     strncpy(s,path,newlen);   
                     s[strlen(s)]='\0';                     
                     path=s;
-                    printf("len_path %ld\n",strlen(path));
                     free(temp);
                     ret=fat32_changeDir(root,ARG);
-                    //printf("%s : ",path);
                     if(ret) {
                         printf("something went wrong\n");
                     }

@@ -4,8 +4,7 @@
 #include <math.h>
 
 
-// initializes a file system on an already made disk
-// returns a handle to the top level directory stored in the first block
+
 //edo e marco
 DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk){
     fs->disk=disk;
@@ -34,16 +33,9 @@ DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk){
     return root;
 }
 
-// creates the inital structures, the top level directory
-// has name "/" and its control block is in the first position
-// it also clears the bitmap of occupied blocks on the disk
-// the current_directory_block is cached in the SimpleFS struct
-// and set to the top level directory
-void fat32_format(fat32* fs);
 
-// creates an empty file in the directory d
-// returns null on error (file existing, no free blocks)
-// an empty file consists only of a block of type FirstBlock
+
+
 //edoardo
 FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
     if(d==NULL || filename==NULL){
@@ -151,7 +143,7 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
 
 
 
-// reads in the (preallocated) blocks array, the name of all files in a directory 
+//marco
 int fat32_listDir(char** names, DirectoryHandle* d){
     int i=0;
     int entries=d->dcb->num_entries;
@@ -210,7 +202,7 @@ void filename_dealloc(char** names) {
     }
     free(names);
 }
-// opens a file in the  directory d. The file should be exisiting
+
 FileHandle* fat32_openFile(DirectoryHandle* d, const char* filename) {
     if(d==NULL || filename==NULL) return NULL;
     char** names=filename_alloc();
@@ -241,7 +233,7 @@ FileHandle* fat32_openFile(DirectoryHandle* d, const char* filename) {
 }
 
 
-// closes a file handle (destroyes it)
+
 int fat32_close(FileHandle* f) {
     if(f==NULL) {
         printf("FileHandle inesistente");
@@ -253,9 +245,7 @@ int fat32_close(FileHandle* f) {
     return 0;
 }
 
-// writes in the file, at current position for size bytes stored in data
-// overwriting and allocating new space if necessary
-// returns the number of bytes written
+
 //marco
 int fat32_write(FileHandle* f, void* data, int size){
     int bytes_written=0;
