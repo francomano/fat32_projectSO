@@ -476,7 +476,7 @@ int fat32_write(FileHandle* f, void* data, int size){
     fakedir->directory=NULL;
     fakedir->f=f->f;
     
-    if(strcmp(f->f->cwd->fcb.name,"/")){
+    if(strcmp(f->f->cwd->fcb.name,"/\0")){
         fakedir->directory=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
         DiskDriver_readBlock(f->f->disk,fakedir->directory,f->f->cwd->fcb.directory_block);
     }
@@ -630,7 +630,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
 //recursively updates size of directories when a write operation is performed
 //edoardo
 int fat32_update_size(DirectoryHandle* d,int num) {
-    if(!(strcmp(d->dcb->fcb.name,"/"))) {
+    if(!(strcmp(d->dcb->fcb.name,"/\0"))) {
         //printf("aggiorno di %d\n",num);
         //printf("prima è %d\n",d->dcb->fcb.size);
         d->dcb->fcb.size+=num;
@@ -665,7 +665,7 @@ int fat32_seek(FileHandle* f, int pos){
 //marco
 int fat32_changeDir(DirectoryHandle* d, char* dirname){
     if(!strcmp(dirname,"..")){
-        if(!strcmp(d->dcb->fcb.name,"/")) return 0;
+        if(!strcmp(d->dcb->fcb.name,"/\0")) return 0;
         FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
         if(d->directory->fcb.block_in_disk==0){
              DiskDriver_readBlock(d->f->disk,d->dcb,0);
@@ -821,6 +821,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
 
 }
 int freeFile(fat32*f,int index){
+    if(index==-1) return -1;
     if(f->disk->fat[index]==index){
         printf("ho eliminato %d blocco\n",index);
         return DiskDriver_freeBlock(f->disk,index);
@@ -836,28 +837,65 @@ int freeFile(fat32*f,int index){
 // returns -1 on failure 0 on success
 // if a directory, it removes recursively all contained files
 int fat32_remove(DirectoryHandle* d, char* filename) {
- if(filename==NULL) return 0;
+    if(d==NULL) return -1;
+    printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
+    int* fat=d->f->disk->fat;
     char** names=filename_alloc();
     fat32_listDir(names,d);
-    int entries=d->dcb->num_entries;
+    int max_entries=(BLOCK_SIZE-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
     int i=0;
-    while(entries>0){
-        if(!(strcmp(names[i],filename))) {
+    if(filename==NULL && d->dcb->num_entries==0)  {
+        DiskDriver_freeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
+        DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
+        return 0;
+    }
+    
+    while(d->dcb->num_entries>0 && i<max_entries){
+        if(filename==NULL || !(strcmp(names[i],filename))) {
             int index=d->dcb->file_blocks[i];
-            int ret=freeFile(d->f,index);
-            d->dcb->file_blocks[i]=-1;
-            d->dcb->num_entries--;
-            DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
-            filename_dealloc(names);
-            printf("ho adesso %d entries \n",d->dcb->num_entries);
-            return ret;
+            if(index==-1) continue;
+            //leggo il ffb per vedere se è una directory
+            FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+            DiskDriver_readBlock(d->f->disk,ffb,index);
+            if(ffb->fcb.is_dir) {
+                printf("entro nell'if\n");
+                DirectoryHandle* dh=(DirectoryHandle*)malloc(sizeof(DirectoryHandle));
+                dh->f=d->f;
+                dh->dcb=(FirstDirectoryBlock*)ffb;
+                dh->directory=d->dcb;
+                dh->pos_in_block=ffb->fcb.block_in_disk;
+                printf("blocco %d\n",dh->pos_in_block);
+                fat32_remove(dh,NULL);
+                d->dcb->num_entries--;
+                DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
+                printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
+                free(dh);
+            }
+            if(d->dcb->num_entries>0 && filename==NULL) {
+                freeFile(d->f,index);
+                d->dcb->file_blocks[i]=-1;
+                d->dcb->num_entries--;
+                DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
+                //filename_dealloc(names);
+                printf("sono in %s e ho adesso %d entries\n",d->dcb->fcb.name,d->dcb->num_entries);
+            }
+            if(filename!=NULL) {
+                filename_dealloc(names);
+                return 0;
+            }
         }
         i++;
-        entries--;
     }
+    //se ho ancora entries scorro la fat rimuovendo i Directory_Blocks
+    /*if(d->dcb->num_entries>0) {
+
+    }*/
     filename_dealloc(names);
-    printf("File %s non presente nella cwd\n",filename);
-    return -1;
+    if(filename!=NULL) {
+        printf("File %s non presente nella cwd\n",filename);
+        return -1;
+    }
+    return 0;
 }
 
 

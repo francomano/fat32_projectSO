@@ -118,14 +118,19 @@ int main(int argc, char** argv) {
             
                 if(!strcmp(ARG,"..") && strcmp(root->dcb->fcb.name,"/")){
                     int len2=strlen(root->f->cwd->fcb.name)+1;
+                    printf("current_len %d\n",len2);
                     int len1=strlen(path);
                     int newlen=len1-len2;
+                    printf("newlen %d\n",newlen);
                     char* s=(char*)malloc(LENPATH);
                     char*temp=path;
                     strncpy(s,path,newlen);                        
                     path=s;
+                    printf("len_path %ld\n",strlen(path));
+                    path[strlen(path)]='\0';
                     free(temp);
                     ret=fat32_changeDir(root,ARG);
+                    //printf("%s : ",path);
                     if(ret) {
                         printf("something went wrong\n");
                     }
