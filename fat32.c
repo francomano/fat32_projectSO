@@ -732,6 +732,23 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
     if(d==NULL || dirname==NULL){
         return -1;
     }
+    int entries=d->dcb->num_entries;
+    int i=0;
+    FirstFileBlock* aux=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+    while(entries>0) {
+        int index=d->dcb->file_blocks[i];
+        if(index!=-1){
+            DiskDriver_readBlock(d->f->disk,aux,index);
+            if(!strcmp(aux->fcb.name,dirname)) {
+                free(aux);
+                printf("Directory gia esistente\n");
+                return 0;
+
+            }
+        }
+        entries--;
+        i++;
+    }
     int block_index=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
 
     //printf("scriverò il blocco di questa nuova cartella in pos %d\n",block_index);
@@ -846,7 +863,6 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
     int i=0;
     if(filename==NULL && d->dcb->num_entries==0)  {
         DiskDriver_freeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
-        DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
         return 0;
     }
     
@@ -869,7 +885,7 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
                 d->dcb->num_entries--;
                 DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
                 printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
-                free(dh);
+                //free(dh);
             }
             if(d->dcb->num_entries>0 && filename==NULL) {
                 freeFile(d->f,index);
@@ -888,7 +904,6 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
     }
     //se ho ancora entries scorro la fat rimuovendo i Directory_Blocks
     /*if(d->dcb->num_entries>0) {
-
     }*/
     filename_dealloc(names);
     if(filename!=NULL) {

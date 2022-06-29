@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
         CMD=strtok(user_cmd," ");
         ARG=strtok(NULL," ");
-        printf("%c\n",ARG[strlen(ARG)]);
+        
    
         if(CMD){
             if(!strcmp(CMD,"exit"))
