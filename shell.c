@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     char user_cmd[LENCMD]={0};
     while(1) {
         //printf("i'm in %s\n",fs->cwd->fcb.name);
-        //printf("%s : ",path);
+        printf("%s : ",path);
         fflush(stdin);
         fgets(user_cmd, LENCMD, stdin);
         
@@ -152,11 +152,11 @@ int main(int argc, char** argv) {
                     }
                 
             }
-            else if (!strcmp(CMD,"mkDir"))
+            else if (!strcmp(CMD,"mkdir"))
             {
             fat32_mkDir(root,ARG);
             }
-            else if (!strcmp(CMD,"createFile"))
+            else if (!strcmp(CMD,"createfile"))
             {
                 fh=fat32_createFile(root,ARG);
                 if(fh) {
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
                     List_print(head);
                 }
             }
-            else if(!strcmp(CMD,"openFile")) {
+            else if(!strcmp(CMD,"open")) {
                 fh=fat32_openFile(root,ARG);
                 if(fh) {
                     List_insert(head,NULL,(ListItem*)fh);

@@ -821,12 +821,12 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
 int freeFile(fat32*f,int index){
     if(index==-1) return -1;
     if(f->disk->fat[index]==index){
-        printf("ho eliminato %d blocco\n",index);
+        printf("ho eliminato il blocco %d\n",index);
         return DiskDriver_freeBlock(f->disk,index);
     }
     int new_index=f->disk->fat[index];
     freeFile(f,new_index);
-    printf("ho eliminato %d blocco\n",index);
+    printf("ho eliminato il blocco %d\n",index);
     return DiskDriver_freeBlock(f->disk,index);
  
 }
@@ -840,6 +840,7 @@ int free_dir(DirectoryHandle* d) {
     }
     while(d->dcb->num_entries>0 && i<max_entries){
             int index=d->dcb->file_blocks[i];
+            i++;
             if(index!=-1) {
                 //leggo il ffb per vedere se è una directory
                 FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
@@ -856,10 +857,11 @@ int free_dir(DirectoryHandle* d) {
                     DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
                     printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
                     free(dh);
+                    continue;
                 }    
                 freeFile(d->f,index);
             }
-            i++;
+            
             //printf("sto iterando e i vale: %d\n",i);
     }
     printf("qua ci arrivo\n");
@@ -934,7 +936,7 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
                 FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
                 DiskDriver_readBlock(d->f->disk,ffb,index);
                 if(ffb->fcb.is_dir) {
-                   DirectoryHandle* dh=(DirectoryHandle*)malloc(sizeof(DirectoryHandle));
+                    DirectoryHandle* dh=(DirectoryHandle*)malloc(sizeof(DirectoryHandle));
                     dh->f=d->f;
                     dh->dcb=(FirstDirectoryBlock*)ffb;
                     dh->directory=d->dcb;
