@@ -475,8 +475,7 @@ int fat32_write(FileHandle* f, void* data, int size){
     return bytes_written;
 }
 
-// reads in the file, at current position size bytes stored in data
-// returns the number of bytes read
+
 int fat32_read(FileHandle* f, void* data, int size) {
     size=(size<=f->ffb->fcb.size)? size : f->ffb->fcb.size;
     int bytes_read=0;
@@ -638,9 +637,7 @@ int fat32_update_size(DirectoryHandle* d,int num) {
     fat32_update_size(d,num);
     return -1;
 }
-// returns the number of bytes read (moving the current pointer to pos)
-// returns pos on success
-// -1 on error (file too short)
+
 int fat32_seek(FileHandle* f, int pos){
     if(pos<f->ffb->fcb.size){
         f->pos_in_file=pos;
@@ -649,9 +646,7 @@ int fat32_seek(FileHandle* f, int pos){
     return -1;
 }
 
-// seeks for a directory in d. If dirname is equal to ".." it goes one level up
-// 0 on success, negative value on error
-// it does side effect on the provided handle
+
 //marco
 int fat32_changeDir(DirectoryHandle* d, char* dirname){
     if(!strcmp(dirname,"..")){
@@ -712,9 +707,7 @@ int fat32_changeDir(DirectoryHandle* d, char* dirname){
     return -1;
 }
 
-// creates a new directory in the current one (stored in fs->current_directory_block)
-// 0 on success
-// -1 on error
+
 //marco
 int fat32_mkDir(DirectoryHandle* d, char* dirname){
     //aggiornare le info della directory corrente
@@ -840,9 +833,7 @@ int freeFile(fat32*f,int index){
  
 }
 
-// removes the file in the current directory
-// returns -1 on failure 0 on success
-// if a directory, it removes recursively all contained files
+
 int fat32_remove(DirectoryHandle* d, char* filename) {
     if(d==NULL) return -1;
     printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
