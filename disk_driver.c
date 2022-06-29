@@ -12,16 +12,6 @@
 #include <sys/types.h>  
 #include <sys/mman.h> 
 
-/**
-   The blocks indices seen by the read/write functions 
-   have to be calculated after the space occupied by the bitmap
-*/
-
-// opens the file (creating it if necessary_
-// allocates the necessary space on the disk
-// if the file was new
-// compiles a disk header
-
 //marco
 void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
    if ((disk->fd = open (filename, O_CREAT |O_RDWR | O_SYNC,0666)) == -1) { 
@@ -41,14 +31,7 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
   disk->header->first_free_block=0;
   printf("%d\n",disk->header->free_blocks);
 
-   /*if(msync(disk->header,sizeof(DiskHeader),MS_SYNC)==-1){
-      perror("MSYNC");
-   }*/
-
   disk->fat =mmap(0,num_blocks*sizeof(int),PROT_READ | PROT_WRITE,MAP_SHARED,disk->fd,sysconf(_SC_PAGE_SIZE));
-  //printf("%d %d\n",disk->fat,MAP_FAILED);
-
-
   if(disk->fat==MAP_FAILED){
      perror("FAT MAP FAILED \n");
   }
@@ -58,16 +41,9 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 
    }
    
-
-  /*if(msync(disk->fat,sizeof(int)*num_blocks,MS_SYNC)==-1){
-      perror("MSYNC FAT");
-   }*/
-   
 }
 
-// reads the block in position block_num
-// returns -1 if the block is free accrding to the bitmap
-// 0 otherwise
+
 //edoardo
 int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
       int n_blocks = disk->header->num_blocks;
@@ -90,8 +66,6 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 }
 
 
-// writes a block in position block_num, and alters the bitmap accordingly
-// returns -1 if operation not possible
 
 //marco
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
@@ -119,8 +93,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num){
 
 }
 
-// frees a block in position block_num, and alters the bitmap accordingly
-// returns -1 if operation not possible
+
 //edoardo
 int DiskDriver_freeBlock(DiskDriver* disk, int block_num) {
    int n_blocks = disk->header->num_blocks;

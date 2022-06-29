@@ -27,7 +27,6 @@ DirectoryHandle* fat32_init(fat32* fs, DiskDriver* disk){
     root->dcb=fdb;
     root->directory=NULL;
     root->pos_in_dir=0;
-    root->pos_in_block=0;
     fs->cwd=fdb;
     fs->disk->fat[0]=0;
     return root;
@@ -253,10 +252,10 @@ int fat32_write(FileHandle* f, void* data, int size){
     int data_first_space=BLOCK_SIZE-sizeof(FileControlBlock);
     int s=f->pos_in_file+size;
     if(f->ffb->fcb.size<s) {
-        printf("fcb size: %d\n",f->ffb->fcb.size);
+        //printf("fcb size: %d\n",f->ffb->fcb.size);
         added_size+=s-f->ffb->fcb.size;
         f->ffb->fcb.size+=added_size;
-        printf("Added_size: %d\n",added_size);
+        //printf("Added_size: %d\n",added_size);
     }
     if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)){ //se il cursore sta nel primo blocco
         if(size<=data_first_space-f->pos_in_file){ //se c'è ancora spazio nel primo blocco dalla posizione in cui sono
@@ -496,10 +495,10 @@ int fat32_read(FileHandle* f, void* data, int size) {
         else {
             int pos_offset=f->pos_in_file;
             int final_offset=(f->ffb->fcb.size-(BLOCK_SIZE-sizeof(FileControlBlock)))%BLOCK_SIZE;
-            printf("final_offset: %d\n",final_offset);
+            //printf("final_offset: %d\n",final_offset);
             int first_succ=fat[f->ffb->fcb.block_in_disk];
             int num_fileblocks=ceil((double)((size-(BLOCK_SIZE-sizeof(FileControlBlock))))/BLOCK_SIZE);
-            printf("num_fileblocks %d\n",num_fileblocks);
+            //printf("num_fileblocks %d\n",num_fileblocks);
             if(first_succ==f->ffb->fcb.block_in_disk){ //non ha successori
                 memcpy(data,f->ffb->data+f->pos_in_file,final_offset-pos_offset);
                 bytes_read+=final_offset-pos_offset;
@@ -511,8 +510,8 @@ int fat32_read(FileHandle* f, void* data, int size) {
                 memcpy(data,f->ffb->data+f->pos_in_file,bytes_left_within_block);
                 //num_fileblocks--;
                 bytes_read+=bytes_left_within_block;
-                printf("ho letto nel primo blocco%d\n",bytes_read);
-                printf("%d %d\n",first_succ,fat[first_succ]);
+                //printf("ho letto nel primo blocco%d\n",bytes_read);
+                //printf("%d %d\n",first_succ,fat[first_succ]);
                 
                 
                 //buffer di ausilio 
@@ -556,7 +555,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
         int pos_offset=(f->pos_in_file-(BLOCK_SIZE-sizeof(FileControlBlock)))%BLOCK_SIZE;
         
         int final_offset=(f->ffb->fcb.size-(BLOCK_SIZE-sizeof(FileControlBlock)))%BLOCK_SIZE;
-        printf("final offset=%d\n",final_offset);
+        //printf("final offset=%d\n",final_offset);
 
         current_block--;
         while(current_block>0) {
@@ -571,7 +570,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
             bytes_read+=size;
         }
         else { //non entra tutto nel blocco il messaggio
-            printf("current=%d e first_succ=%d\n",current_block_index,fat[current_block_index]);
+           // printf("current=%d e first_succ=%d\n",current_block_index,fat[current_block_index]);
             //leggo i rimanenti bytes del current_block
             if(fat[current_block_index]==current_block_index){ //non ha successori
                 memcpy(data,buff,final_offset-pos_offset);
@@ -589,7 +588,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
                     DiskDriver_readBlock(f->f->disk,data+bytes_read,first_succ);
                     bytes_read+=BLOCK_SIZE;
                     first_succ=fat[first_succ];
-                    printf("%d\n",first_succ);
+                    //printf("%d\n",first_succ);
                     num_fileblocks--;
                 }
                 //leggo i bytes rimanenti dell'ultimo blocco 
@@ -907,9 +906,7 @@ int free_dir(DirectoryHandle* d) {
     }
     return 0;
 }
-// removes the file in the current directory
-// returns -1 on failure 0 on success
-// if a directory, it removes recursively all contained files
+
 int fat32_remove(DirectoryHandle* d, char* filename) {
     if(d==NULL) return -1;
     printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
@@ -920,6 +917,15 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
     int i=0;
     int entries=d->dcb->num_entries;
     int valid_entries=0;
+    DirectoryHandle* fakedir=(DirectoryHandle*)malloc(sizeof(DirectoryHandle));
+    fakedir->dcb=d->dcb;
+    fakedir->directory=NULL;
+    fakedir->f=d->f;
+    if(strcmp(f->f->cwd->fcb.name,"/\0")){
+        fakedir->directory=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
+        DiskDriver_readBlock(d->f->disk,fakedir->directory,fakedir->dcb->fcb.directory_block);
+    }
+    int size_to_remove=0;
     while(i<max_entries){
         if(!(strcmp(names[i],filename))) {
             int index=d->dcb->file_blocks[i];
@@ -932,11 +938,15 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
                     dh->f=d->f;
                     dh->dcb=(FirstDirectoryBlock*)ffb;
                     dh->directory=d->dcb;
+                    size_to_remove-=ffb->fcb.size;
                     free_dir(dh);
                     d->dcb->file_blocks[i]=-1;
                     d->dcb->num_entries--;
                     DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
                     free(dh);
+                    fat32_update_size(fakedir,size_to_remove);
+                    free(fakedir);
+                    filename_dealloc(names);
                     return 0;
                 }
                 else {
@@ -944,6 +954,10 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
                     d->dcb->file_blocks[i]=-1;
                     d->dcb->num_entries--;
                     DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
+                    size_to_remove-=ffb->fcb.size;
+                    fat32_update_size(fakedir,size_to_remove);
+                    free(fakedir);
+                    filename_dealloc(names);
                     return 0;
                 }
                 valid_entries++;
@@ -980,6 +994,10 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
                             DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
                             DiskDriver_writeBlock(d->f,buf,first_succ);
                             free(dh);
+                            filename_dealloc(names);
+                            size_to_remove-=ffb->fcb.size;
+                            fat32_update_size(fakedir,size_to_remove);
+                            free(fakedir);
                             return 0;
                         }
                         else {
@@ -988,6 +1006,10 @@ int fat32_remove(DirectoryHandle* d, char* filename) {
                             d->dcb->num_entries--;
                             DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
                             DiskDriver_writeBlock(d->f,buf,first_succ);
+                            size_to_remove-=ffb->fcb.size;
+                            fat32_update_size(fakedir,size_to_remove);
+                            free(fakedir);
+                            filename_dealloc(names);
                             return 0;
                         }
                         valid_entries++;
