@@ -157,9 +157,14 @@ int fat32_listDir(char** names, DirectoryHandle* d){
     int entries_of_others=BLOCK_SIZE/sizeof(int);
     int valid_entries=0;
     FirstDirectoryBlock* buf=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
+    int mask;
     while(entries_of_first_block){
         if(d->dcb->file_blocks[i]!=-1){
             DiskDriver_readBlock(d->f->disk,buf,d->dcb->file_blocks[i]);
+            if(buf->fcb.is_dir) {
+                mask=(1<<i);
+                color_bitmap|=mask;
+            }
             strcpy(names[valid_entries],buf->fcb.name);
             valid_entries++;
         }
@@ -178,6 +183,10 @@ int fat32_listDir(char** names, DirectoryHandle* d){
         while(entries_of_others){
             if(buf3->file_blocks[i]!=-1){
                 DiskDriver_readBlock(d->f->disk,buf2,buf3->file_blocks[i]);
+                if(buf->fcb.is_dir) {
+                mask=(1<<i);
+                color_bitmap|=mask;
+                }
                 strcpy(names[valid_entries],buf2->fcb.name);
                 valid_entries++;
                 entries--;
@@ -190,7 +199,7 @@ int fat32_listDir(char** names, DirectoryHandle* d){
         free(buf3);
     }
     free(buf);
-    return 0;
+    return color_bitmap;
 }
 
 char** filename_alloc() {

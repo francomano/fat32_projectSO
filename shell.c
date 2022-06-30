@@ -100,9 +100,11 @@ int main(int argc, char** argv) {
             {
                 if(root->dcb->num_entries>0){
                     char** names=filename_alloc();
-                    fat32_listDir(names,root);
+                    int bitmap=fat32_listDir(names,root);
+                    int mask;
                     for(int i=0;i<root->dcb->num_entries;i++){
-                        printf("%s\n",names[i]);
+                        mask=1;
+                        (bitmap&(mask<<i))? printf("\x1b[31m%s\33[0m\n",names[i]) : printf("%s\n",names[i]);
                     }
                     filename_dealloc(names);
                 }
