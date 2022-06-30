@@ -104,11 +104,11 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
                     dirBlock->file_blocks[z]=block_index;
                     flag=0;
                     DiskDriver_writeBlock(d->f->disk, dirBlock, first_succ_index);
+                    free(dirBlock);
                     break;
                 }
             }
             if(flag){ //erano tutti occupati
-                //DirectoryBlock* dirBlock=(DirectoryBlock*)malloc(sizeof(BLOCK_SIZE));
                 int index=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
                 if(index==-1)
                     return 0;
@@ -126,6 +126,7 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
             d->f->disk->fat[d->dcb->fcb.block_in_disk]=idx;
             dirBlock->file_blocks[0]=block_index;
             DiskDriver_writeBlock(d->f->disk, dirBlock, idx);
+            free(dirBlock);
 
             }
         }
@@ -616,24 +617,23 @@ int fat32_read(FileHandle* f, void* data, int size) {
 }
 //recursively updates size of directories when a write operation is performed
 //edoardo
-int fat32_update_size(DirectoryHandle* d,int num) {
+void fat32_update_size(DirectoryHandle* d,int num) {
     if(!(strcmp(d->dcb->fcb.name,"/\0"))) {
         //printf("aggiorno di %d\n",num);
         //printf("prima è %d\n",d->dcb->fcb.size);
         d->dcb->fcb.size+=num;
         DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
         //printf("ora è %d\n",d->dcb->fcb.size);
-        return 0;
+        return;
     }
     d->dcb->fcb.size+=num;
     DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
     FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
-    //printf("SONO NEL CORPO1!! d->directory:%p  d->directory->fcb.block_in_disk: %d\n",d->directory,d->directory->fcb.block_in_disk);
     DiskDriver_readBlock(d->f->disk,aux,d->directory->fcb.directory_block);
     d->dcb=d->directory;
     d->directory=aux;
     fat32_update_size(d,num);
-    return -1;
+    return;
 }
 
 int fat32_seek(FileHandle* f, int pos){
@@ -649,15 +649,17 @@ int fat32_seek(FileHandle* f, int pos){
 int fat32_changeDir(DirectoryHandle* d, char* dirname){
     if(!strcmp(dirname,"..")){
         if(!strcmp(d->dcb->fcb.name,"/\0")) return 0;
-        FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
         if(d->directory->fcb.block_in_disk==0){
              DiskDriver_readBlock(d->f->disk,d->dcb,0);
              d->directory=NULL;
         }
         else{
+            FirstDirectoryBlock* aux=(FirstDirectoryBlock*)malloc(sizeof(FirstDirectoryBlock));
             DiskDriver_readBlock(d->f->disk,aux,d->directory->fcb.directory_block);
+            FirstDirectoryBlock*temp=d->dcb;
             d->dcb=d->directory;
             d->directory=aux;
+            free(temp);
         }
         
         
@@ -680,8 +682,10 @@ int fat32_changeDir(DirectoryHandle* d, char* dirname){
             }
             //printf("%s\n",aux2->fcb.name);
             if(!strcmp(aux2->fcb.name,dirname)) {
+                FirstDirectoryBlock*temp=d->directory;
                 d->directory=d->dcb;
                 d->dcb=aux2;
+                free(temp);
                 d->f->cwd=d->dcb;
                 return 0;
             }
@@ -693,8 +697,10 @@ int fat32_changeDir(DirectoryHandle* d, char* dirname){
                 return -1;
                 }
                 if(!strcmp(aux2->fcb.name,dirname)) {
-                     d->directory=d->dcb;
+                    FirstDirectoryBlock*temp=d->directory;
+                    d->directory=d->dcb;
                     d->dcb=aux2;
+                    free(temp);
                     d->f->cwd=d->dcb;
                     return 0;
                 }
@@ -730,6 +736,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
         entries--;
         i++;
     }
+    free(aux);
     int block_index=DiskDriver_getFreeBlock(d->f->disk,d->dcb->fcb.block_in_disk);
 
     //printf("scriverò il blocco di questa nuova cartella in pos %d\n",block_index);
@@ -755,6 +762,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
         fdb->file_blocks[i]=-1;
     }
     DiskDriver_writeBlock(d->f->disk, fdb, block_index);
+    free(fdb);
     d->f->disk->fat[block_index]=block_index; //se la fat ha stesso numero dell'indice è in uso il blocco(valid) ma senza successori
         
     if(d->dcb->num_entries<first_size){
@@ -783,6 +791,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
                 if(dirBlock->file_blocks[z]==-1){
                     dirBlock->file_blocks[z]=block_index;
                     DiskDriver_writeBlock(d->f->disk, dirBlock, first_succ_index);
+                    free(dirBlock);
                     flag=0;
                     break;
                 }
@@ -793,6 +802,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
                     return -1;
                 dirBlock->file_blocks[0]=block_index;
                 DiskDriver_writeBlock(d->f->disk, dirBlock, index);
+                free(dirBlock);
                 d->f->disk->fat[first_succ_index]=index; //successore del successore
                 
 
@@ -805,6 +815,7 @@ int fat32_mkDir(DirectoryHandle* d, char* dirname){
                     return -1;
             dirBlock->file_blocks[0]=block_index;
             DiskDriver_writeBlock(d->f->disk, dirBlock, idx);
+            free(dirBlock);
             d->f->disk->fat[d->dcb->fcb.block_in_disk]=idx;
 
         }

@@ -103,7 +103,7 @@ int fat32_seek(FileHandle* f, int pos);
 
  int fat32_changeDir(DirectoryHandle* d, char* dirname);
 
-int fat32_update_size(DirectoryHandle* d,int num);
+void fat32_update_size(DirectoryHandle* d,int num);
 
 int fat32_mkDir(DirectoryHandle* d, char* dirname);
 

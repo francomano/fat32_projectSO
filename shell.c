@@ -24,17 +24,15 @@ char* cmd[NUMCMD]= {
 };
 
 
-
-//LIST OF FILEHANDLES
-
-
 int main(int argc, char** argv) {
     if(argc<2) {
         printf("Inserire il nome del disco\n");
         return 0;
     }
     int ret;
-    //READ THE DISK
+
+
+    //**********************READ THE DISK*******************************************
     
     char filename[64];
     strcpy(filename,argv[1]);
@@ -247,6 +245,10 @@ int main(int argc, char** argv) {
                 }
                 ret=fat32_remove(root,ARG);
             }
+            else{
+                if(strlen(CMD)>0)
+                    printf("command not found: %s\n",CMD);
+            }
             
         }
         //List_print(head);     
@@ -256,6 +258,7 @@ int main(int argc, char** argv) {
 
  
     //cleanup
+    //destroy della lista dei filehandle che deve deallocare sia fh che ffb dentro ogni fh
     free(disk);
     free(fs->cwd);
     free(fs);
