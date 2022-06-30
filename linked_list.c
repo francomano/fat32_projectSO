@@ -96,3 +96,27 @@ void List_print(ListHead* head) {
     tmp=tmp->next;
   }
 }
+
+void List_destroy(ListHead* head) {
+  if(head==NULL) return;
+  FileHandle* fh;
+  if(head->size==1) {
+    fh= (FileHandle*) head->first;
+    free(fh->ffb);
+    free(head->first);
+    free(head);
+    return;
+  }
+  ListItem* aux=head->first;
+  ListItem* tmp;
+  while(aux!=NULL) {
+    tmp=aux;
+    aux=aux->next;
+    fh=(FileHandle*)tmp;
+    free(fh->ffb);
+    free(tmp);
+    
+  }
+  free(head);
+  return;
+}

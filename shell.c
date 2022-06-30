@@ -259,6 +259,7 @@ int main(int argc, char** argv) {
  
     //cleanup
     //destroy della lista dei filehandle che deve deallocare sia fh che ffb dentro ogni fh
+    List_destroy(head);
     free(disk);
     free(fs->cwd);
     free(fs);
