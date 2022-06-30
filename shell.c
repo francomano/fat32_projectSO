@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
                 fh=fat32_createFile(root,ARG);
                 if(fh) {
                     List_insert(head,NULL,(ListItem*)fh);
-                    List_print(head);
+                    //List_print(head);
                 }
             }
             else if(!strcmp(CMD,"open")) {
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
                     continue;
                 } 
                 if((fh = (FileHandle*)List_find(head,ARG))==NULL) {
-                    printf("File handle at :%p\n",fh);
+                    //printf("File handle at :%p\n",fh);
                     printf("File non aperto o non creato\n");
                     continue;
                 }
@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
                     continue;
                 } 
                 if((fh = (FileHandle*)List_find(head,ARG))==NULL) {
-                    printf("File handle at :%p\n",fh);
+                    //printf("File handle at :%p\n",fh);
                     printf("File non aperto o non creato\n");
                     continue;
                 }

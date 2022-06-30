@@ -149,6 +149,7 @@ FileHandle* fat32_createFile(DirectoryHandle* d, const char* filename) {
 //marco
 int fat32_listDir(char** names, DirectoryHandle* d){
     int i=0;
+    int color_bitmap=0;
     int entries=d->dcb->num_entries;
     int entries_of_first_block=(BLOCK_SIZE
 		   -sizeof(FileControlBlock)
@@ -291,7 +292,7 @@ int fat32_write(FileHandle* f, void* data, int size){
         f->ffb->fcb.size+=added_size;
         //printf("Added_size: %d\n",added_size);
     }
-    if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)){ //se il cursore sta nel primo blocco
+    if(f->pos_in_file<=BLOCK_SIZE-sizeof(FileControlBlock)){ //se il cursore sta nel primo blocco
         if(size<=data_first_space-f->pos_in_file){ //se c'è ancora spazio nel primo blocco dalla posizione in cui sono
             FirstFileBlock* first=f->ffb;
             memcpy(first->data+f->pos_in_file,data,size);
@@ -392,7 +393,7 @@ int fat32_write(FileHandle* f, void* data, int size){
         int blocchi_da_scorrere=ceil((double)(f->pos_in_file-(BLOCK_SIZE-sizeof(FileControlBlock)))/(double)BLOCK_SIZE);
         int old_index=f->ffb->fcb.block_in_disk;
         int index=f->f->disk->fat[old_index]; 
-        blocchi_da_scorrere--;
+        if(blocchi_da_scorrere>0) blocchi_da_scorrere--;
         while(blocchi_da_scorrere){ 
             old_index=index;
             index=f->f->disk->fat[old_index]; 
@@ -514,7 +515,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
     int bytes_read=0;
     int* fat=f->f->disk->fat;
     int bytes_left_within_block;
-    if(f->pos_in_file<BLOCK_SIZE-sizeof(FileControlBlock)) { //siamo col cursore nel primo
+    if(f->pos_in_file<=BLOCK_SIZE-sizeof(FileControlBlock)) { //siamo col cursore nel primo
         if(f->pos_in_file+size<=BLOCK_SIZE-sizeof(FileControlBlock)) {
             if(size+f->pos_in_file<=f->ffb->fcb.size) {
                 memcpy(data,f->ffb->data+f->pos_in_file,size);
