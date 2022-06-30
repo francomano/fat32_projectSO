@@ -840,7 +840,6 @@ int free_dir(DirectoryHandle* d) {
     }
     while(d->dcb->num_entries>0 && i<max_entries){
             int index=d->dcb->file_blocks[i];
-            i++;
             if(index!=-1) {
                 //leggo il ffb per vedere se è una directory
                 FirstFileBlock* ffb=(FirstFileBlock*)malloc(sizeof(FirstFileBlock));
@@ -857,16 +856,19 @@ int free_dir(DirectoryHandle* d) {
                     DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
                     printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
                     free(dh);
-                    continue;
-                }    
+                }
+                else{    
                 freeFile(d->f,index);
+                d->dcb->file_blocks[i]=-1;
+                d->dcb->num_entries--;
+                DiskDriver_writeBlock(d->f->disk,d->dcb,d->dcb->fcb.block_in_disk);
+                printf("sono in %s e ho num_entries: %d\n",d->dcb->fcb.name,d->dcb->num_entries);
+                }
             }
-            
+             i++;
             //printf("sto iterando e i vale: %d\n",i);
     }
-    printf("qua ci arrivo\n");
-    freeFile(d->f,d->dcb->fcb.block_in_disk);
-    printf("sto dopo la freefile\n");
+    
     if(d->dcb->num_entries>0) {
         i=0;
         int first_succ=fat[d->dcb->fcb.block_in_disk];
@@ -906,6 +908,9 @@ int free_dir(DirectoryHandle* d) {
             }
             first_succ=fat[first_succ];
     }
+    printf("qua ci arrivo\n");
+    freeFile(d->f,d->dcb->fcb.block_in_disk);
+    printf("sto dopo la freefile\n");
     return 0;
 }
 

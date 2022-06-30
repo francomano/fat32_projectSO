@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
                 printf("\n");
                 printf("bytes_read: %d\n",ret);
             }
-            else if(!strcmp(CMD,"rm")) { //PER ORA FUNZIONA SE SI RIMUOVONO A PARTIRE DALL'ULTIMO CREATO ANDANDO INDIETRO
+            else if(!strcmp(CMD,"rm")) { 
                 while((fh = (FileHandle*)List_find(head,ARG))!=0){
                     List_detach(head,(ListItem*)fh);
                     fat32_close(fh);
