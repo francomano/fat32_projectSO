@@ -96,10 +96,6 @@ int main(int argc, char** argv) {
             {
                 break;
             }
-            else if(!strcmp(CMD,"init"))
-            {
-                root=fat32_init(fs,disk);
-            }
             else if (!strcmp(CMD,"ls"))
             {
                 if(root->dcb->num_entries>0){
@@ -113,8 +109,10 @@ int main(int argc, char** argv) {
             }
             else if (!strcmp(CMD,"cd"))
             {
-                
-            
+                if(!ARG) {
+                    printf("usage: cd <nomefile>\n");
+                    continue;
+                }
                 if(!strcmp(ARG,"..") && strcmp(root->dcb->fcb.name,"/\0")){
                     int len2=strlen(root->dcb->fcb.name)+1;
                     int len1=strlen(path);
@@ -126,7 +124,7 @@ int main(int argc, char** argv) {
                     path=s;
                     free(temp);
                     ret=fat32_changeDir(root,ARG);
-                    if(ret) {
+                    if(ret==-1) {
                         printf("something went wrong\n");
                     }
                     
@@ -137,8 +135,8 @@ int main(int argc, char** argv) {
                 }
                 else{
                     ret=fat32_changeDir(root,ARG);
-                    if(ret) {
-                        printf("something went wrong\n");
+                    if(ret==-1) {
+                        printf("no such file or directory: %s\n",ARG);
                     }
                     else{
                         strcat(path,root->dcb->fcb.name);                        
@@ -152,10 +150,18 @@ int main(int argc, char** argv) {
             }
             else if (!strcmp(CMD,"mkdir"))
             {
-            fat32_mkDir(root,ARG);
+                if(!ARG) {
+                    printf("usage: mkdir <nomefile>\n");
+                    continue;
+                }    
+                fat32_mkDir(root,ARG);
             }
             else if (!strcmp(CMD,"createfile"))
             {
+                if(!ARG) {
+                    printf("usage: createfile <nomefile>\n");
+                    continue;
+                }
                 fh=fat32_createFile(root,ARG);
                 if(fh) {
                     List_insert(head,NULL,(ListItem*)fh);
@@ -163,17 +169,25 @@ int main(int argc, char** argv) {
                 }
             }
             else if(!strcmp(CMD,"open")) {
+                if(!ARG) {
+                    printf("usage: open <nomefile>\n");
+                    continue;
+                }
                 fh=fat32_openFile(root,ARG);
                 if(fh) {
                     List_insert(head,NULL,(ListItem*)fh);
                     
-                    List_print(head);
+                    //List_print(head);
                 }
             }
             else if(!strcmp(CMD,"close")) {
+                if(!ARG) {
+                    printf("usage: close <nomefile>\n");
+                    continue;
+                }
                 ListItem* item=List_find(head,ARG);
                 List_detach(head,item);
-                List_print(head);
+                //List_print(head);
                 fat32_close((FileHandle*)item);
             }
 
@@ -183,7 +197,6 @@ int main(int argc, char** argv) {
                     continue;
                 }
                 if((fh = (FileHandle*)List_find(head,ARG))==NULL) {
-                    printf("File handle at :%p\n",fh);
                     printf("File non aperto o non creato\n");
                     continue;
                 }
@@ -239,6 +252,10 @@ int main(int argc, char** argv) {
                 printf("bytes_read: %d\n",ret);
             }
             else if(!strcmp(CMD,"rm")) { 
+                if(!ARG) {
+                    printf("usage: rm <nomefile>\n");
+                    continue;
+                } 
                 while((fh = (FileHandle*)List_find(head,ARG))!=0){
                     List_detach(head,(ListItem*)fh);
                     fat32_close(fh);
