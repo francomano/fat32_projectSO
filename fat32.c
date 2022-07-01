@@ -630,8 +630,8 @@ int fat32_read(FileHandle* f, void* data, int size) {
     }
     else {
         int current_block=ceil((double)(f->pos_in_file-(BLOCK_SIZE-sizeof(FileControlBlock)))/(double)BLOCK_SIZE);
+        //printf("da scorrere per arrivare al current %d\n",current_block);
         int current_block_index=fat[f->ffb->fcb.block_in_disk];
-        int first_succ=fat[current_block_index];
         char buff[BLOCK_SIZE];
         
         int pos_offset=(f->pos_in_file-(BLOCK_SIZE-sizeof(FileControlBlock)))%BLOCK_SIZE;
@@ -647,7 +647,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
         DiskDriver_readBlock(f->f->disk,buff,current_block_index);
 
 
-        if(pos_offset+size<=BLOCK_SIZE) {
+        if(pos_offset+size<=BLOCK_SIZE && f->pos_in_file+size<f->ffb->fcb.size) {
             memcpy(data,buff,size);
             bytes_read+=size;
         }
@@ -655,8 +655,8 @@ int fat32_read(FileHandle* f, void* data, int size) {
            // printf("current=%d e first_succ=%d\n",current_block_index,fat[current_block_index]);
             //leggo i rimanenti bytes del current_block
             if(fat[current_block_index]==current_block_index){ //non ha successori
-                int diff=f->ffb->fcb.size-pos_offset;
-                memcpy(data,f->ffb->data+f->pos_in_file,diff);
+                int diff=final_offset-pos_offset;
+                memcpy(data,buff+pos_offset,diff);
                 bytes_read+=diff;
                 printf("Lettura oltre EOF\n");
             }
@@ -668,6 +668,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
                 //calcolo quanti  fileblocks dovrò leggere
                 num_fileblocks--;
                 //leggo prima i fileblocks interi
+                int first_succ=fat[current_block_index];
                 while(num_fileblocks>1 && first_succ!=fat[first_succ]) {
                     DiskDriver_readBlock(f->f->disk,data+bytes_read,first_succ);
                     bytes_read+=BLOCK_SIZE;
@@ -696,6 +697,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
         }
 
     }
+    
     f->pos_in_file+=bytes_read;
     return bytes_read;
 }
