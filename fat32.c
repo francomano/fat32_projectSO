@@ -573,8 +573,7 @@ int fat32_read(FileHandle* f, void* data, int size) {
             //printf("final_offset: %d\n",final_offset);
             int old_index=f->ffb->fcb.block_in_disk;
             int first_succ=fat[f->ffb->fcb.block_in_disk];
-            int num_fileblocks=ceil((double)((size-(BLOCK_SIZE-sizeof(FileControlBlock))))/BLOCK_SIZE);
-            //printf("num_fileblocks %d\n",num_fileblocks);
+            
             if(first_succ==f->ffb->fcb.block_in_disk){ //non ha successori
                 int diff=f->ffb->fcb.size-pos_offset;
                 memcpy(data,f->ffb->data+f->pos_in_file,diff);
@@ -583,8 +582,10 @@ int fat32_read(FileHandle* f, void* data, int size) {
                 
             }
             else{ //leggiamo il resto del primo e andiamo a leggere i successori
-    
+                printf("sto qua\n");
                 bytes_left_within_block = BLOCK_SIZE-sizeof(FileControlBlock)-f->pos_in_file;
+                int num_fileblocks=ceil((double)((size-bytes_left_within_block))/BLOCK_SIZE);
+                printf("num_fileblocks %d\n",num_fileblocks);
                 //leggo i rimanenti bytes del ffb
                 memcpy(data,f->ffb->data+f->pos_in_file,bytes_left_within_block);
                 //num_fileblocks--;
@@ -596,7 +597,8 @@ int fat32_read(FileHandle* f, void* data, int size) {
                 //buffer di ausilio 
                 char buff[BLOCK_SIZE];
                 //leggo prima i fileblocks interi
-                num_fileblocks--;
+                //num_fileblocks--;
+                printf("prima del while fileblocks %d\n",num_fileblocks);
                 while(num_fileblocks>1 && first_succ!=old_index) {
                     DiskDriver_readBlock(f->f->disk,data+bytes_read,first_succ);
                     bytes_read+=BLOCK_SIZE;
