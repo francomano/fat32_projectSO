@@ -1,4 +1,4 @@
-CCOPTS= -Wall -g -lm -std=gnu99 -Wstrict-prototypes 
+CCOPTS= -Wall -g -std=gnu99 -Wstrict-prototypes 
 LIBS= 
 CC=gcc
 AR=ar
@@ -24,7 +24,7 @@ HEADERS=disk_driver.h\
 all:	$(BINS) 
 
 shell: shell.c $(OBJS) 
-	$(CC) $(CCOPTS)  -o $@ $^ $(LIBS)
+	$(CC) $(CCOPTS)  -o $@ $^ -lm
 
 clean:
 	rm -rf *.o *~  $(BINS)
